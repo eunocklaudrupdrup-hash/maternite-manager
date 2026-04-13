@@ -544,7 +544,7 @@ export default function App() {
       <aside className="sidebar">
         <div>
           <p className="eyebrow">Clinique active</p>
-          <h2>Maternite Espoir</h2>
+          <h2>{data.clinic?.name || "Clinique"}</h2>
           <p className="muted">{session.fullName}</p>
           <p className="badge">{session.role}</p>
         </div>

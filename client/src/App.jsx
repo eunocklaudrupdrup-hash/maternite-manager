@@ -4,6 +4,7 @@ import { apiRequest } from "./api.js";
 const sections = [
   { key: "dashboard", label: "Dashboard" },
   { key: "clinic", label: "Clinique" },
+  { key: "serviceStatuses", label: "Statuts" },
   { key: "patients", label: "Patientes" },
   { key: "appointments", label: "Rendez-vous" },
   { key: "births", label: "Naissances" },
@@ -16,14 +17,15 @@ const sections = [
 ];
 
 const initialForms = {
-  patients: { fullName: "", age: "", phone: "", pregnancyWeeks: "", status: "Suivi prenatal", history: "" },
+  patients: { fullName: "", age: "", phone: "", pregnancyWeeks: "", serviceStatusId: "", history: "" },
   appointments: { patientName: "", service: "", staffName: "", date: "", time: "", status: "Confirme" },
   births: { motherName: "", babyName: "", sex: "Feminin", weightKg: "", heightCm: "", deliveryType: "Naturel", complications: "", birthDate: "", birthTime: "", motherStatus: "Stable", babyStatus: "Stable" },
   inventory: { name: "", category: "Medicament", photo: "", quantity: "", unit: "", lowStockThreshold: "", price: "" },
   invoices: { patientName: "", item: "", amount: "", status: "Paye", paymentMethod: "Especes" },
   expenses: { label: "", amount: "", category: "General" },
   staff: { fullName: "", role: "", department: "", phone: "", schedule: "", performanceScore: "" },
-  users: { fullName: "", email: "", role: "receptionist", password: "", permissionsText: "patients,appointments,invoices", isActive: true }
+  users: { fullName: "", email: "", role: "receptionist", password: "", permissionsText: "patients,appointments,invoices", isActive: true },
+  serviceStatuses: { label: "", price: "" }
 };
 
 const availablePermissions = ["patients", "appointments", "births", "inventory", "finance", "reports", "staff", "users", "invoices"];
@@ -36,6 +38,7 @@ export default function App() {
     dashboard: null,
     clinic: null,
     patients: [],
+    serviceStatuses: [],
     appointments: [],
     births: [],
     inventory: [],
@@ -98,6 +101,7 @@ export default function App() {
       const requests = [
         apiRequest("/dashboard"),
         apiRequest("/clinic"),
+        apiRequest("/serviceStatuses"),
         apiRequest("/patients"),
         apiRequest("/appointments"),
         apiRequest("/births"),
@@ -116,6 +120,7 @@ export default function App() {
       const [
         dashboard,
         clinic,
+        serviceStatuses,
         patients,
         appointments,
         births,
@@ -140,7 +145,7 @@ export default function App() {
         reports = null;
       }
 
-      setData({ dashboard, clinic, patients, appointments, births, inventory, invoices, expenses, staff, users, logs, sales, reports });
+      setData({ dashboard, clinic, serviceStatuses, patients, appointments, births, inventory, invoices, expenses, staff, users, logs, sales, reports });
       setClinicForm({
         name: clinic?.name || "",
         address: clinic?.address || "",
@@ -307,6 +312,36 @@ export default function App() {
       await apiRequest("/clinic", {
         method: "PATCH",
         body: JSON.stringify(clinicForm)
+      });
+      await loadAll();
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function assignPatientStatus(patientId, serviceStatusId) {
+    if (!serviceStatusId) {
+      return;
+    }
+    try {
+      await apiRequest(`/patients/${patientId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ serviceStatusId })
+      });
+      await loadAll();
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function payPatientStatus(patientId) {
+    try {
+      await apiRequest("/cashier/pay-status", {
+        method: "POST",
+        body: JSON.stringify({
+          patientId,
+          paymentMethod: "Especes"
+        })
       });
       await loadAll();
     } catch (submitError) {
@@ -661,16 +696,82 @@ export default function App() {
           <SectionLayout
             title="Patientes"
             form={
-              <ResourceForm
-                fields={[["fullName", "Nom complet"], ["age", "Age", "number"], ["phone", "Telephone"], ["pregnancyWeeks", "Semaines de grossesse", "number"], ["status", "Statut"], ["history", "Antecedents"]]}
-                value={forms.patients}
-                onChange={(value) => updateForm("patients", value, setForms)}
-                onSubmit={() => submitResource("patients", "patients")}
-              />
+              <form
+                className="stack compact"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitResource("patients", "patients");
+                }}
+              >
+                <label>
+                  Nom complet
+                  <input value={forms.patients.fullName} onChange={(event) => updateForm("patients", { ...forms.patients, fullName: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Age
+                  <input type="number" value={forms.patients.age} onChange={(event) => updateForm("patients", { ...forms.patients, age: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Telephone
+                  <input value={forms.patients.phone} onChange={(event) => updateForm("patients", { ...forms.patients, phone: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Semaines de grossesse
+                  <input type="number" value={forms.patients.pregnancyWeeks} onChange={(event) => updateForm("patients", { ...forms.patients, pregnancyWeeks: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Statut
+                  <select
+                    value={forms.patients.serviceStatusId}
+                    onChange={(event) => updateForm("patients", { ...forms.patients, serviceStatusId: event.target.value }, setForms)}
+                  >
+                    <option value="">Selectionner un statut</option>
+                    {data.serviceStatuses.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="hint">
+                  Prix automatique: {getSelectedStatusPrice(data.serviceStatuses, forms.patients.serviceStatusId)} FCFA
+                </p>
+                <label>
+                  Antecedents
+                  <input value={forms.patients.history} onChange={(event) => updateForm("patients", { ...forms.patients, history: event.target.value }, setForms)} />
+                </label>
+                <button type="submit">Enregistrer</button>
+              </form>
             }
           >
-            <SimpleTable rows={data.patients} columns={["fullName", "age", "phone", "pregnancyWeeks", "status"]} />
+            <PatientList rows={data.patients} serviceStatuses={data.serviceStatuses} onAssignStatus={assignPatientStatus} />
           </SectionLayout>
+        )}
+
+        {activeSection === "serviceStatuses" && (
+          <section className="grid two-columns">
+            <article className="panel">
+              <h3>Statuts et tarifs</h3>
+              {session.role !== "admin" ? (
+                <p className="muted">Seul l'administrateur peut gerer les statuts.</p>
+              ) : (
+                <ServiceStatusList rows={data.serviceStatuses} onSave={(id, payload) => apiRequest(`/service-statuses/${id}`, { method: "PATCH", body: JSON.stringify(payload) }).then(loadAll).catch((e) => setError(e.message))} />
+              )}
+            </article>
+            <article className="panel">
+              <h3>Ajouter un statut</h3>
+              {session.role !== "admin" ? (
+                <p className="muted">Seul l'administrateur peut ajouter des statuts.</p>
+              ) : (
+                <ResourceForm
+                  fields={[["label", "Libelle"], ["price", "Prix", "number"]]}
+                  value={forms.serviceStatuses}
+                  onChange={(value) => updateForm("serviceStatuses", value, setForms)}
+                  onSubmit={() => submitResource("serviceStatuses", "serviceStatuses")}
+                />
+              )}
+            </article>
+          </section>
         )}
 
         {activeSection === "appointments" && (
@@ -755,6 +856,10 @@ export default function App() {
 
         {activeSection === "finance" && (
           <section className="grid two-columns">
+            <article className="panel">
+              <h3>Patientes en attente de paiement</h3>
+              <PendingPaymentsList rows={data.patients.filter((item) => item.paymentStatus !== "Paiement effectue a la caisse" && item.serviceStatusLabel)} onPay={payPatientStatus} />
+            </article>
             <article className="panel">
               <h3>Factures et paiements</h3>
               <ResourceForm
@@ -1074,6 +1179,123 @@ function InventoryList({ rows }) {
   );
 }
 
+function PatientList({ rows, serviceStatuses, onAssignStatus }) {
+  if (!rows?.length) {
+    return <p className="muted">Aucune donnee disponible.</p>;
+  }
+
+  return (
+    <div className="stack">
+      {rows.map((row) => (
+        <PatientCard key={row.id} patient={row} serviceStatuses={serviceStatuses} onAssignStatus={onAssignStatus} />
+      ))}
+    </div>
+  );
+}
+
+function PatientCard({ patient, serviceStatuses, onAssignStatus }) {
+  const [nextStatusId, setNextStatusId] = useState("");
+
+  return (
+    <article className="user-card">
+      <div className="user-card-head">
+        <div>
+          <strong>{patient.fullName}</strong>
+          <p className="muted">{patient.phone || "-"}</p>
+        </div>
+        <span className={patient.paymentStatus === "Paiement effectue a la caisse" ? "status-active" : "status-inactive"}>
+          {patient.paymentStatus || "En attente"}
+        </span>
+      </div>
+      <p><strong>Statut actif :</strong> {patient.serviceStatusLabel || patient.status || "-"}</p>
+      <p><strong>Prix :</strong> {patient.servicePrice || 0} FCFA</p>
+      <p><strong>Grossesse :</strong> {patient.pregnancyWeeks || "-"} semaines</p>
+      <label>
+        Continuer avec un autre statut
+        <select value={nextStatusId} onChange={(event) => setNextStatusId(event.target.value)}>
+          <option value="">Selectionner un statut</option>
+          {serviceStatuses.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.label} - {item.price} FCFA
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="user-actions">
+        <button type="button" onClick={() => onAssignStatus(patient.id, nextStatusId)}>
+          Affecter le statut
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function ServiceStatusList({ rows, onSave }) {
+  if (!rows?.length) {
+    return <p className="muted">Aucun statut configure.</p>;
+  }
+
+  return (
+    <div className="stack">
+      {rows.map((row) => (
+        <ServiceStatusCard key={row.id} item={row} onSave={onSave} />
+      ))}
+    </div>
+  );
+}
+
+function ServiceStatusCard({ item, onSave }) {
+  const [label, setLabel] = useState(item.label);
+  const [price, setPrice] = useState(item.price);
+
+  useEffect(() => {
+    setLabel(item.label);
+    setPrice(item.price);
+  }, [item]);
+
+  return (
+    <article className="user-card">
+      <label>
+        Libelle
+        <input value={label} onChange={(event) => setLabel(event.target.value)} />
+      </label>
+      <label>
+        Prix
+        <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} />
+      </label>
+      <div className="user-actions">
+        <button type="button" onClick={() => onSave(item.id, { label, price })}>
+          Enregistrer
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function PendingPaymentsList({ rows, onPay }) {
+  if (!rows?.length) {
+    return <p className="muted">Aucune patiente en attente de paiement.</p>;
+  }
+
+  return (
+    <div className="stack">
+      {rows.map((row) => (
+        <article key={row.id} className="user-card">
+          <strong>{row.fullName}</strong>
+          <p className="muted">{row.serviceStatusLabel || "-"}</p>
+          <p>Montant a payer: {row.servicePrice || 0} FCFA</p>
+          <p>Etat: {row.paymentStatus || "En attente"}</p>
+          <div className="user-actions">
+            <button type="button" onClick={() => onPay(row.id)}>
+              Valider le paiement a la caisse
+            </button>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function AuditTable({ rows }) {
   if (!rows?.length) {
     return <p className="muted">Aucune activite enregistree.</p>;
@@ -1259,6 +1481,7 @@ function humanizeAction(action) {
   const map = {
     "auth:login": "Connexion",
     "create:patients": "Creation patiente",
+    "create:serviceStatuses": "Creation statut",
     "create:appointments": "Creation rendez-vous",
     "create:births": "Enregistrement accouchement",
     "create:inventory": "Ajout produit pharmacie",
@@ -1266,6 +1489,9 @@ function humanizeAction(action) {
     "create:expenses": "Enregistrement depense",
     "create:users": "Creation utilisateur",
     "update:user": "Modification utilisateur",
+    "update:serviceStatus": "Modification statut",
+    "assign:patientStatus": "Affectation statut patiente",
+    "cashier:paymentCompleted": "Paiement effectue a la caisse",
     "update:clinic": "Modification clinique",
     "create:clinic": "Creation clinique"
   };
@@ -1286,5 +1512,18 @@ function buildLogDetails(row) {
     return `${row.details || "-"} / ${row.metadata?.role || ""}`;
   }
 
+  if (row.action === "assign:patientStatus") {
+    return `${row.metadata?.serviceStatusLabel || "-"} / ${row.metadata?.servicePrice || 0} FCFA`;
+  }
+
+  if (row.action === "cashier:paymentCompleted") {
+    return `${row.metadata?.amount || 0} FCFA / ${row.metadata?.paymentMethod || "-"}`;
+  }
+
   return row.details || "-";
+}
+
+function getSelectedStatusPrice(serviceStatuses, serviceStatusId) {
+  const item = serviceStatuses.find((status) => status.id === serviceStatusId);
+  return item ? item.price : 0;
 }

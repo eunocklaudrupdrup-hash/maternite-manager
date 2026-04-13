@@ -194,6 +194,10 @@ export function createServerApp(app) {
 
   registerCrud(app, "clinics", { readRoles: ["admin"], writeRoles: ["admin"] });
   registerCrud(app, "staff", { readRoles: ["admin", "accountant", "receptionist"], writeRoles: ["admin"] });
+  registerCrud(app, "serviceStatuses", {
+    readRoles: ["admin", "doctor", "midwife", "nurse", "accountant", "receptionist"],
+    writeRoles: ["admin"]
+  });
   registerCrud(app, "patients", {
     readRoles: ["admin", "doctor", "midwife", "nurse", "receptionist"],
     writeRoles: ["admin", "doctor", "midwife", "receptionist"]
@@ -261,6 +265,30 @@ export function createServerApp(app) {
     });
   });
 
+  app.patch("/api/service-statuses/:id", requireRole(["admin"]), (req, res) => {
+    const updated = updateEntity("serviceStatuses", req.params.id, req.user.clinicId, {
+      label: req.body?.label,
+      price: Number(req.body?.price || 0)
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: "Statut introuvable." });
+    }
+
+    appendLog({
+      clinicId: req.user.clinicId,
+      action: "update:serviceStatus",
+      actorId: req.user.id,
+      actorName: req.user.fullName,
+      entityType: "serviceStatuses",
+      entityId: updated.id,
+      details: updated.label,
+      metadata: { price: updated.price }
+    });
+
+    res.json(updated);
+  });
+
   app.patch("/api/users/:id", requireRole(["admin"]), (req, res) => {
     const db = getDb();
     const current = db.users.find(
@@ -318,6 +346,99 @@ export function createServerApp(app) {
     res.json(sanitizeUser(updated));
   });
 
+  app.patch("/api/patients/:id/status", requireRole(["admin", "doctor", "midwife", "receptionist"]), (req, res) => {
+    const db = getDb();
+    const patient = db.patients.find(
+      (item) => item.id === req.params.id && item.clinicId === req.user.clinicId
+    );
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patiente introuvable." });
+    }
+
+    const serviceStatus = db.serviceStatuses.find(
+      (item) => item.id === req.body?.serviceStatusId && item.clinicId === req.user.clinicId
+    );
+
+    if (!serviceStatus) {
+      return res.status(404).json({ message: "Statut introuvable." });
+    }
+
+    const updated = updateEntity("patients", req.params.id, req.user.clinicId, {
+      status: serviceStatus.label,
+      serviceStatusId: serviceStatus.id,
+      serviceStatusLabel: serviceStatus.label,
+      servicePrice: Number(serviceStatus.price || 0),
+      paymentStatus: "En attente de paiement caisse"
+    });
+
+    appendLog({
+      clinicId: req.user.clinicId,
+      action: "assign:patientStatus",
+      actorId: req.user.id,
+      actorName: req.user.fullName,
+      entityType: "patients",
+      entityId: updated.id,
+      details: `${updated.fullName} - ${serviceStatus.label}`,
+      metadata: {
+        serviceStatusLabel: serviceStatus.label,
+        servicePrice: serviceStatus.price
+      }
+    });
+
+    res.json(updated);
+  });
+
+  app.post("/api/cashier/pay-status", requireRole(["admin", "accountant", "receptionist"]), (req, res) => {
+    const db = getDb();
+    const patient = db.patients.find(
+      (item) => item.id === req.body?.patientId && item.clinicId === req.user.clinicId
+    );
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patiente introuvable." });
+    }
+
+    if (!patient.serviceStatusLabel || !patient.servicePrice) {
+      return res.status(400).json({ message: "Aucun statut facture pour cette patiente." });
+    }
+
+    if (patient.paymentStatus === "Paiement effectue a la caisse") {
+      return res.status(400).json({ message: "Ce statut est deja paye." });
+    }
+
+    const invoice = addEntity("invoices", {
+      clinicId: req.user.clinicId,
+      createdBy: req.user.id,
+      createdByName: req.user.fullName,
+      patientName: patient.fullName,
+      item: patient.serviceStatusLabel,
+      amount: Number(patient.servicePrice || 0),
+      status: "Paye",
+      paymentMethod: req.body?.paymentMethod || "Especes"
+    });
+
+    const updatedPatient = updateEntity("patients", patient.id, req.user.clinicId, {
+      paymentStatus: "Paiement effectue a la caisse"
+    });
+
+    appendLog({
+      clinicId: req.user.clinicId,
+      action: "cashier:paymentCompleted",
+      actorId: req.user.id,
+      actorName: req.user.fullName,
+      entityType: "patients",
+      entityId: patient.id,
+      details: `${patient.fullName} - ${patient.serviceStatusLabel}`,
+      metadata: {
+        amount: patient.servicePrice,
+        paymentMethod: req.body?.paymentMethod || "Especes"
+      }
+    });
+
+    res.status(201).json({ invoice, patient: updatedPatient });
+  });
+
   app.get("/api/reports/medical", requireRole(["admin", "doctor", "midwife"]), (req, res) => {
     res.json(
       getMedicalReport(req.user.clinicId, {
@@ -358,12 +479,41 @@ function registerCrud(app, name, access) {
   });
 
   app.post(`/api/${name}`, requireRole(access.writeRoles), (req, res) => {
-    const created = addEntity(name, {
+    let payload = {
       ...req.body,
       clinicId: req.body?.clinicId || req.user.clinicId,
       createdBy: req.user.id,
       createdByName: req.user.fullName
-    });
+    };
+
+    if (name === "patients") {
+      const db = getDb();
+      const serviceStatus = db.serviceStatuses.find(
+        (item) => item.id === req.body?.serviceStatusId && item.clinicId === req.user.clinicId
+      );
+
+      if (!serviceStatus) {
+        return res.status(400).json({ message: "Veuillez selectionner un statut valide." });
+      }
+
+      payload = {
+        ...payload,
+        status: serviceStatus.label,
+        serviceStatusId: serviceStatus.id,
+        serviceStatusLabel: serviceStatus.label,
+        servicePrice: Number(serviceStatus.price || 0),
+        paymentStatus: "En attente de paiement caisse"
+      };
+    }
+
+    if (name === "serviceStatuses") {
+      payload = {
+        ...payload,
+        price: Number(req.body?.price || 0)
+      };
+    }
+
+    const created = addEntity(name, payload);
     res.status(201).json(created);
   });
 }

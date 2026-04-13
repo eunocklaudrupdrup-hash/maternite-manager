@@ -61,9 +61,39 @@ export function createSeedData() {
         address: "Abomey-Calavi",
         pregnancyWeeks: 34,
         status: "Suivi prenatal",
+        serviceStatusId: "svc_002",
+        serviceStatusLabel: "Suivi Prenatal",
+        servicePrice: 15000,
+        paymentStatus: "Paiement effectue a la caisse",
         history: "G2P1, sans complication majeure",
         createdAt: "2026-04-05T09:00:00.000Z",
         updatedAt: "2026-04-05T09:00:00.000Z"
+      }
+    ],
+    serviceStatuses: [
+      {
+        id: "svc_001",
+        clinicId,
+        label: "Consultation",
+        price: 10000,
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-04-01T08:00:00.000Z"
+      },
+      {
+        id: "svc_002",
+        clinicId,
+        label: "Suivi Prenatal",
+        price: 15000,
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-04-01T08:00:00.000Z"
+      },
+      {
+        id: "svc_003",
+        clinicId,
+        label: "Accouchement",
+        price: 50000,
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-04-01T08:00:00.000Z"
       }
     ],
     appointments: [

@@ -29,11 +29,54 @@ button {
   background: #146c43;
   color: #fff;
   font-weight: 700;
+  transition:
+    transform 140ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+  box-shadow: 0 10px 22px rgba(20, 108, 67, 0.18);
 }
 
 button.secondary {
   background: rgba(20, 108, 67, 0.14);
   color: #146c43;
+  box-shadow: none;
+}
+
+button:hover {
+  background: #0f5a38;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(20, 108, 67, 0.22);
+}
+
+button.secondary:hover {
+  background: rgba(20, 108, 67, 0.22);
+  color: #0f5a38;
+  box-shadow: 0 10px 22px rgba(20, 108, 67, 0.12);
+}
+
+button:active {
+  transform: translateY(1px) scale(0.985);
+  background: #0b4a2e;
+  box-shadow: 0 6px 14px rgba(20, 108, 67, 0.18);
+}
+
+button.secondary:active {
+  background: rgba(20, 108, 67, 0.28);
+  color: #0b4a2e;
+}
+
+button:focus-visible {
+  outline: 3px solid rgba(20, 108, 67, 0.22);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+  box-shadow: none;
 }
 
 input,

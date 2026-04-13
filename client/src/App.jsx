@@ -11,6 +11,7 @@ const sections = [
   { key: "finance", label: "Caisse" },
   { key: "staff", label: "Personnel" },
   { key: "users", label: "Utilisateurs" },
+  { key: "activity", label: "Activite" },
   { key: "reports", label: "Rapports" }
 ];
 
@@ -42,6 +43,8 @@ export default function App() {
     expenses: [],
     staff: [],
     users: [],
+    logs: [],
+    sales: [],
     reports: null
   });
   const [forms, setForms] = useState(initialForms);
@@ -106,9 +109,24 @@ export default function App() {
 
       if (session.role === "admin") {
         requests.push(apiRequest("/users"));
+        requests.push(apiRequest("/admin/logs"));
+        requests.push(apiRequest("/admin/sales"));
       }
 
-      const [dashboard, clinic, patients, appointments, births, inventory, invoices, expenses, staff, users = []] =
+      const [
+        dashboard,
+        clinic,
+        patients,
+        appointments,
+        births,
+        inventory,
+        invoices,
+        expenses,
+        staff,
+        users = [],
+        logs = [],
+        sales = []
+      ] =
         await Promise.all(requests);
 
       let reports = null;
@@ -122,7 +140,7 @@ export default function App() {
         reports = null;
       }
 
-      setData({ dashboard, clinic, patients, appointments, births, inventory, invoices, expenses, staff, users, reports });
+      setData({ dashboard, clinic, patients, appointments, births, inventory, invoices, expenses, staff, users, logs, sales, reports });
       setClinicForm({
         name: clinic?.name || "",
         address: clinic?.address || "",
@@ -841,6 +859,27 @@ export default function App() {
           </section>
         )}
 
+        {activeSection === "activity" && (
+          <section className="stack">
+            <article className="panel">
+              <h3>Connexions et actions des utilisateurs</h3>
+              {session.role !== "admin" ? (
+                <p className="muted">Acces reserve a l'administrateur.</p>
+              ) : (
+                <AuditTable rows={data.logs} />
+              )}
+            </article>
+            <article className="panel">
+              <h3>Ventes en caisse</h3>
+              {session.role !== "admin" ? (
+                <p className="muted">Acces reserve a l'administrateur.</p>
+              ) : (
+                <SalesTable rows={data.sales} />
+              )}
+            </article>
+          </section>
+        )}
+
         {activeSection === "reports" && (
           <section className="stack">
             <article className="panel">
@@ -1035,6 +1074,80 @@ function InventoryList({ rows }) {
   );
 }
 
+function AuditTable({ rows }) {
+  if (!rows?.length) {
+    return <p className="muted">Aucune activite enregistree.</p>;
+  }
+
+  return (
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Action</th>
+            <th>Date</th>
+            <th>Heure</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const { date, time } = formatLogDate(row.createdAt);
+            return (
+              <tr key={row.id}>
+                <td>{row.actorName || "-"}</td>
+                <td>{humanizeAction(row.action)}</td>
+                <td>{date}</td>
+                <td>{time}</td>
+                <td>{buildLogDetails(row)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SalesTable({ rows }) {
+  if (!rows?.length) {
+    return <p className="muted">Aucune vente enregistree.</p>;
+  }
+
+  return (
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Vendeur</th>
+            <th>Patiente</th>
+            <th>Article</th>
+            <th>Montant</th>
+            <th>Date</th>
+            <th>Heure</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const { date, time } = formatLogDate(row.createdAt);
+            return (
+              <tr key={row.id}>
+                <td>{row.actorName || "-"}</td>
+                <td>{row.metadata?.patientName || "-"}</td>
+                <td>{row.metadata?.item || "-"}</td>
+                <td>{row.metadata?.amount || 0} FCFA</td>
+                <td>{date}</td>
+                <td>{time}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
   const [role, setRole] = useState(user.role);
   const [permissionsText, setPermissionsText] = useState((user.permissions || []).join(","));
@@ -1129,4 +1242,49 @@ function buildReportQuery(filter) {
   }
 
   return `?${params.toString()}`;
+}
+
+function formatLogDate(value) {
+  const date = new Date(value);
+  return {
+    date: date.toLocaleDateString("fr-FR"),
+    time: date.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  };
+}
+
+function humanizeAction(action) {
+  const map = {
+    "auth:login": "Connexion",
+    "create:patients": "Creation patiente",
+    "create:appointments": "Creation rendez-vous",
+    "create:births": "Enregistrement accouchement",
+    "create:inventory": "Ajout produit pharmacie",
+    "create:invoices": "Vente / facture",
+    "create:expenses": "Enregistrement depense",
+    "create:users": "Creation utilisateur",
+    "update:user": "Modification utilisateur",
+    "update:clinic": "Modification clinique",
+    "create:clinic": "Creation clinique"
+  };
+
+  return map[action] || action;
+}
+
+function buildLogDetails(row) {
+  if (row.action === "auth:login") {
+    return `${row.metadata?.email || ""} (${row.metadata?.role || ""})`;
+  }
+
+  if (row.action === "create:invoices") {
+    return `${row.metadata?.item || "-"} / ${row.metadata?.amount || 0} FCFA`;
+  }
+
+  if (row.action === "update:user") {
+    return `${row.details || "-"} / ${row.metadata?.role || ""}`;
+  }
+
+  return row.details || "-";
 }

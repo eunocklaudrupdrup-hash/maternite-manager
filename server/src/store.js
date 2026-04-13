@@ -54,14 +54,17 @@ export function addEntity(name, payload) {
   }
 
   db[name].unshift(entity);
-  db.logs.unshift({
-    id: makeId("log"),
+  db.logs.unshift(buildLogEntry({
     clinicId: payload.clinicId,
     action: `create:${name}`,
     actorId: payload.createdBy,
+    actorName: payload.createdByName || "",
+    entityType: name,
+    entityId: entity.id,
     createdAt: now,
-    details: entity.id
-  });
+    details: entity.id,
+    metadata: buildEntityMetadata(name, entity)
+  }));
   saveDb(db);
   return entity;
 }
@@ -84,6 +87,18 @@ export function updateEntity(name, id, clinicId, updates) {
   collection[index] = next;
   saveDb(db);
   return next;
+}
+
+export function appendLog(entry) {
+  const db = getDb();
+  db.logs.unshift(buildLogEntry(entry));
+  saveDb(db);
+  return db.logs[0];
+}
+
+export function getLogs(clinicId) {
+  const db = getDb();
+  return (db.logs || []).filter((item) => item.clinicId === clinicId);
 }
 
 export function createClinicWithAdmins({ clinic, admins }) {
@@ -119,19 +134,60 @@ export function createClinicWithAdmins({ clinic, admins }) {
   db.clinics.unshift(createdClinic);
   db.users.unshift(...createdAdmins);
   db.logs.unshift({
-    id: makeId("log"),
-    clinicId,
-    action: "create:clinic",
-    actorId: createdAdmins[0]?.id || "system",
-    createdAt: now,
-    details: createdClinic.name
-  });
+    buildLogEntry({
+      clinicId,
+      action: "create:clinic",
+      actorId: createdAdmins[0]?.id || "system",
+      actorName: createdAdmins[0]?.fullName || "System",
+      entityType: "clinics",
+      entityId: createdClinic.id,
+      createdAt: now,
+      details: createdClinic.name,
+      metadata: { clinicName: createdClinic.name }
+    })
+  );
   saveDb(db);
 
   return {
     clinic: createdClinic,
     admins: createdAdmins
   };
+}
+
+function buildLogEntry(entry) {
+  return {
+    id: makeId("log"),
+    clinicId: entry.clinicId,
+    action: entry.action,
+    actorId: entry.actorId || "",
+    actorName: entry.actorName || "",
+    entityType: entry.entityType || "",
+    entityId: entry.entityId || "",
+    createdAt: entry.createdAt || new Date().toISOString(),
+    details: entry.details || "",
+    metadata: entry.metadata || {}
+  };
+}
+
+function buildEntityMetadata(name, entity) {
+  if (name === "invoices") {
+    return {
+      patientName: entity.patientName || "",
+      item: entity.item || "",
+      amount: entity.amount || 0,
+      paymentMethod: entity.paymentMethod || "",
+      status: entity.status || ""
+    };
+  }
+
+  if (name === "inventory") {
+    return {
+      productName: entity.name || "",
+      quantity: entity.quantity || 0
+    };
+  }
+
+  return {};
 }
 
 function buildMonthlyTotals(invoices, expenses) {

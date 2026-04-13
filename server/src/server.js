@@ -4,11 +4,13 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import {
   addEntity,
+  appendLog,
   createClinicWithAdmins,
   getCollection,
   getDashboardData,
   getDb,
   getFinancialReport,
+  getLogs,
   getMedicalReport,
   updateEntity
 } from "./store.js";
@@ -35,6 +37,20 @@ export function createServerApp(app) {
     if (user.isActive === false) {
       return res.status(403).json({ message: "Ce compte est desactive." });
     }
+
+    appendLog({
+      clinicId: user.clinicId,
+      action: "auth:login",
+      actorId: user.id,
+      actorName: user.fullName,
+      entityType: "users",
+      entityId: user.id,
+      details: `${user.fullName} connected`,
+      metadata: {
+        email: user.email,
+        role: user.role
+      }
+    });
 
     const token = createToken({
       id: user.id,
@@ -145,11 +161,35 @@ export function createServerApp(app) {
     if (!updated) {
       return res.status(404).json({ message: "Clinique introuvable." });
     }
+    appendLog({
+      clinicId: req.user.clinicId,
+      action: "update:clinic",
+      actorId: req.user.id,
+      actorName: req.user.fullName,
+      entityType: "clinics",
+      entityId: updated.id,
+      details: updated.name,
+      metadata: {
+        name: updated.name
+      }
+    });
     res.json(updated);
   });
 
   app.get("/api/dashboard", (req, res) => {
     res.json(getDashboardData(req.user.clinicId));
+  });
+
+  app.get("/api/admin/logs", requireRole(["admin"]), (req, res) => {
+    const logs = getLogs(req.user.clinicId);
+    res.json(logs);
+  });
+
+  app.get("/api/admin/sales", requireRole(["admin"]), (req, res) => {
+    const logs = getLogs(req.user.clinicId).filter(
+      (item) => item.action === "create:invoices"
+    );
+    res.json(logs);
   });
 
   registerCrud(app, "clinics", { readRoles: ["admin"], writeRoles: ["admin"] });
@@ -206,6 +246,7 @@ export function createServerApp(app) {
     const created = addEntity("users", {
       clinicId: req.user.clinicId,
       createdBy: req.user.id,
+      createdByName: req.user.fullName,
       fullName: payload.fullName,
       email: payload.email,
       password: payload.password || "ChangeMe123!",
@@ -260,6 +301,20 @@ export function createServerApp(app) {
     }
 
     const updated = updateEntity("users", req.params.id, req.user.clinicId, updates);
+    appendLog({
+      clinicId: req.user.clinicId,
+      action: "update:user",
+      actorId: req.user.id,
+      actorName: req.user.fullName,
+      entityType: "users",
+      entityId: updated.id,
+      details: updated.fullName,
+      metadata: {
+        email: updated.email,
+        role: updated.role,
+        isActive: updated.isActive
+      }
+    });
     res.json(sanitizeUser(updated));
   });
 
@@ -306,7 +361,8 @@ function registerCrud(app, name, access) {
     const created = addEntity(name, {
       ...req.body,
       clinicId: req.body?.clinicId || req.user.clinicId,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      createdByName: req.user.fullName
     });
     res.status(201).json(created);
   });

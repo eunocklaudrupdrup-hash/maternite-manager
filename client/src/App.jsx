@@ -28,6 +28,7 @@ const availablePermissions = ["patients", "appointments", "births", "inventory",
 
 export default function App() {
   const [session, setSession] = useState(null);
+  const [authMode, setAuthMode] = useState("login");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [data, setData] = useState({
     dashboard: null,
@@ -44,6 +45,18 @@ export default function App() {
   const [forms, setForms] = useState(initialForms);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [clinicSignup, setClinicSignup] = useState({
+    clinic: {
+      name: "",
+      address: "",
+      phone: "",
+      email: "",
+      type: "Privee"
+    },
+    admins: [
+      { fullName: "", email: "", password: "" }
+    ]
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("maternite_token");
@@ -116,6 +129,30 @@ export default function App() {
       setSession(response.user);
     } catch (loginError) {
       setError(loginError.message);
+    }
+  }
+
+  async function handleClinicSignup(event) {
+    event.preventDefault();
+    setError("");
+    try {
+      const cleanedAdmins = clinicSignup.admins.filter(
+        (admin) => admin.fullName || admin.email || admin.password
+      );
+
+      const response = await apiRequest("/onboarding/clinic", {
+        method: "POST",
+        body: JSON.stringify({
+          clinic: clinicSignup.clinic,
+          admins: cleanedAdmins
+        })
+      });
+
+      localStorage.setItem("maternite_token", response.token);
+      localStorage.setItem("maternite_user", JSON.stringify(response.user));
+      setSession(response.user);
+    } catch (signupError) {
+      setError(signupError.message);
     }
   }
 
@@ -219,18 +256,155 @@ export default function App() {
               Une interface moderne pour piloter les soins, l&apos;administration, la pharmacie et la caisse d&apos;une clinique d&apos;accouchement.
             </p>
           </div>
-          <form className="stack" onSubmit={handleLogin}>
-            <label>
-              Email
-              <input name="email" type="email" defaultValue="admin@demo.maternite" required />
-            </label>
-            <label>
-              Mot de passe
-              <input name="password" type="password" defaultValue="admin123" required />
-            </label>
-            <button type="submit">Se connecter</button>
-          </form>
-          <p className="hint">Demo admin: admin@demo.maternite / admin123</p>
+          <div className="auth-tabs">
+            <button
+              type="button"
+              className={authMode === "login" ? "tab-button active-tab" : "tab-button"}
+              onClick={() => setAuthMode("login")}
+            >
+              Connexion
+            </button>
+            <button
+              type="button"
+              className={authMode === "signup" ? "tab-button active-tab" : "tab-button"}
+              onClick={() => setAuthMode("signup")}
+            >
+              Creer une clinique
+            </button>
+          </div>
+          {authMode === "login" ? (
+            <>
+              <form className="stack" onSubmit={handleLogin}>
+                <label>
+                  Email
+                  <input name="email" type="email" defaultValue="admin@demo.maternite" required />
+                </label>
+                <label>
+                  Mot de passe
+                  <input name="password" type="password" defaultValue="admin123" required />
+                </label>
+                <button type="submit">Se connecter</button>
+              </form>
+              <p className="hint">Demo admin: admin@demo.maternite / admin123</p>
+            </>
+          ) : (
+            <form className="stack" onSubmit={handleClinicSignup}>
+              <h3>Nouvelle clinique d&apos;accouchement</h3>
+              <label>
+                Nom de la clinique
+                <input
+                  value={clinicSignup.clinic.name}
+                  onChange={(event) => setClinicSignup({
+                    ...clinicSignup,
+                    clinic: { ...clinicSignup.clinic, name: event.target.value }
+                  })}
+                  required
+                />
+              </label>
+              <label>
+                Adresse
+                <input
+                  value={clinicSignup.clinic.address}
+                  onChange={(event) => setClinicSignup({
+                    ...clinicSignup,
+                    clinic: { ...clinicSignup.clinic, address: event.target.value }
+                  })}
+                />
+              </label>
+              <label>
+                Telephone
+                <input
+                  value={clinicSignup.clinic.phone}
+                  onChange={(event) => setClinicSignup({
+                    ...clinicSignup,
+                    clinic: { ...clinicSignup.clinic, phone: event.target.value }
+                  })}
+                />
+              </label>
+              <label>
+                Email clinique
+                <input
+                  type="email"
+                  value={clinicSignup.clinic.email}
+                  onChange={(event) => setClinicSignup({
+                    ...clinicSignup,
+                    clinic: { ...clinicSignup.clinic, email: event.target.value }
+                  })}
+                />
+              </label>
+              <label>
+                Type
+                <input
+                  value={clinicSignup.clinic.type}
+                  onChange={(event) => setClinicSignup({
+                    ...clinicSignup,
+                    clinic: { ...clinicSignup.clinic, type: event.target.value }
+                  })}
+                />
+              </label>
+
+              {clinicSignup.admins.map((admin, index) => (
+                <div key={index} className="subpanel">
+                  <h4>Administrateur {index + 1}</h4>
+                  <label>
+                    Nom complet
+                    <input
+                      value={admin.fullName}
+                      onChange={(event) => {
+                        const admins = [...clinicSignup.admins];
+                        admins[index] = { ...admins[index], fullName: event.target.value };
+                        setClinicSignup({ ...clinicSignup, admins });
+                      }}
+                      required={index === 0}
+                    />
+                  </label>
+                  <label>
+                    Email
+                    <input
+                      type="email"
+                      value={admin.email}
+                      onChange={(event) => {
+                        const admins = [...clinicSignup.admins];
+                        admins[index] = { ...admins[index], email: event.target.value };
+                        setClinicSignup({ ...clinicSignup, admins });
+                      }}
+                      required={index === 0}
+                    />
+                  </label>
+                  <label>
+                    Mot de passe
+                    <input
+                      type="password"
+                      value={admin.password}
+                      onChange={(event) => {
+                        const admins = [...clinicSignup.admins];
+                        admins[index] = { ...admins[index], password: event.target.value };
+                        setClinicSignup({ ...clinicSignup, admins });
+                      }}
+                      required={index === 0}
+                    />
+                  </label>
+                </div>
+              ))}
+
+              {clinicSignup.admins.length < 2 ? (
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() =>
+                    setClinicSignup({
+                      ...clinicSignup,
+                      admins: [...clinicSignup.admins, { fullName: "", email: "", password: "" }]
+                    })
+                  }
+                >
+                  Ajouter un second administrateur
+                </button>
+              ) : null}
+
+              <button type="submit">Creer la clinique</button>
+            </form>
+          )}
           {error ? <p className="error">{error}</p> : null}
         </div>
       </div>

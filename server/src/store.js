@@ -86,6 +86,54 @@ export function updateEntity(name, id, clinicId, updates) {
   return next;
 }
 
+export function createClinicWithAdmins({ clinic, admins }) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const clinicId = makeId("cli");
+
+  const createdClinic = {
+    id: clinicId,
+    name: clinic.name,
+    address: clinic.address || "",
+    phone: clinic.phone || "",
+    email: clinic.email || "",
+    type: clinic.type || "Privee",
+    logo: clinic.logo || "",
+    createdAt: now,
+    updatedAt: now
+  };
+
+  const createdAdmins = admins.map((admin) => ({
+    id: makeId("usr"),
+    clinicId,
+    fullName: admin.fullName,
+    email: admin.email,
+    password: admin.password,
+    role: "admin",
+    isActive: true,
+    permissions: ["patients", "finance", "reports", "inventory", "staff", "users", "appointments", "births", "invoices"],
+    createdAt: now,
+    updatedAt: now
+  }));
+
+  db.clinics.unshift(createdClinic);
+  db.users.unshift(...createdAdmins);
+  db.logs.unshift({
+    id: makeId("log"),
+    clinicId,
+    action: "create:clinic",
+    actorId: createdAdmins[0]?.id || "system",
+    createdAt: now,
+    details: createdClinic.name
+  });
+  saveDb(db);
+
+  return {
+    clinic: createdClinic,
+    admins: createdAdmins
+  };
+}
+
 function buildMonthlyTotals(invoices, expenses) {
   const months = {};
   for (const invoice of invoices) {

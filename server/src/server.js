@@ -4,6 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import {
   addEntity,
+  createClinicWithAdmins,
   getCollection,
   getDashboardData,
   getDb,
@@ -52,6 +53,56 @@ export function createServerApp(app) {
         role: user.role,
         permissions: user.permissions
       }
+    });
+  });
+
+  app.post("/api/onboarding/clinic", (req, res) => {
+    const payload = req.body ?? {};
+    const clinic = payload.clinic ?? {};
+    const admins = Array.isArray(payload.admins) ? payload.admins : [];
+
+    if (!clinic.name?.trim()) {
+      return res.status(400).json({ message: "Le nom de la clinique est obligatoire." });
+    }
+
+    if (admins.length === 0) {
+      return res.status(400).json({ message: "Au moins un administrateur est obligatoire." });
+    }
+
+    const invalidAdmin = admins.find(
+      (admin) => !admin.fullName?.trim() || !admin.email?.trim() || !admin.password?.trim()
+    );
+
+    if (invalidAdmin) {
+      return res.status(400).json({ message: "Chaque administrateur doit avoir un nom, un email et un mot de passe." });
+    }
+
+    const db = getDb();
+    const normalizedEmails = admins.map((admin) => String(admin.email).toLowerCase());
+    const duplicateExisting = db.users.some((user) =>
+      normalizedEmails.includes(String(user.email).toLowerCase())
+    );
+    const duplicateRequest = new Set(normalizedEmails).size !== normalizedEmails.length;
+
+    if (duplicateExisting || duplicateRequest) {
+      return res.status(409).json({ message: "Un email administrateur existe deja." });
+    }
+
+    const created = createClinicWithAdmins({ clinic, admins });
+    const primaryAdmin = created.admins[0];
+    const token = createToken({
+      id: primaryAdmin.id,
+      clinicId: primaryAdmin.clinicId,
+      fullName: primaryAdmin.fullName,
+      role: primaryAdmin.role,
+      permissions: primaryAdmin.permissions
+    });
+
+    return res.status(201).json({
+      clinic: created.clinic,
+      admins: created.admins.map(sanitizeUser),
+      token,
+      user: sanitizeUser(primaryAdmin)
     });
   });
 

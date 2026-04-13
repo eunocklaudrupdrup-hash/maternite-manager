@@ -8,7 +8,8 @@ import {
   getDashboardData,
   getDb,
   getFinancialReport,
-  getMedicalReport
+  getMedicalReport,
+  updateEntity
 } from "./store.js";
 import { createToken, getUserFromAuthHeader, requireRole } from "./utils/auth.js";
 
@@ -28,6 +29,10 @@ export function createServerApp(app) {
 
     if (!user || user.password !== password) {
       return res.status(401).json({ message: "Identifiants invalides." });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({ message: "Ce compte est desactive." });
     }
 
     const token = createToken({
@@ -101,6 +106,74 @@ export function createServerApp(app) {
     writeRoles: ["admin", "doctor", "midwife", "nurse", "pharmacist", "accountant", "receptionist"]
   });
 
+  app.get("/api/users", requireRole(["admin"]), (req, res) => {
+    const db = getDb();
+    res.json(
+      db.users
+        .filter((item) => item.clinicId === req.user.clinicId)
+        .map(sanitizeUser)
+    );
+  });
+
+  app.post("/api/users", requireRole(["admin"]), (req, res) => {
+    const payload = req.body ?? {};
+    const db = getDb();
+    const exists = db.users.some(
+      (item) => item.email.toLowerCase() === String(payload.email || "").toLowerCase()
+    );
+
+    if (exists) {
+      return res.status(409).json({ message: "Un utilisateur avec cet email existe deja." });
+    }
+
+    const created = addEntity("users", {
+      clinicId: req.user.clinicId,
+      createdBy: req.user.id,
+      fullName: payload.fullName,
+      email: payload.email,
+      password: payload.password || "ChangeMe123!",
+      role: payload.role || "receptionist",
+      isActive: payload.isActive !== false,
+      permissions: normalizePermissions(payload.role || "receptionist", payload.permissions)
+    });
+
+    res.status(201).json({
+      user: sanitizeUser(created),
+      temporaryPassword: created.password
+    });
+  });
+
+  app.patch("/api/users/:id", requireRole(["admin"]), (req, res) => {
+    const db = getDb();
+    const current = db.users.find(
+      (item) => item.id === req.params.id && item.clinicId === req.user.clinicId
+    );
+
+    if (!current) {
+      return res.status(404).json({ message: "Utilisateur introuvable." });
+    }
+
+    const updates = {};
+    if (typeof req.body.fullName === "string") {
+      updates.fullName = req.body.fullName;
+    }
+    if (typeof req.body.role === "string") {
+      updates.role = req.body.role;
+    }
+    if (typeof req.body.isActive === "boolean") {
+      updates.isActive = req.body.isActive;
+    }
+    if (Array.isArray(req.body.permissions)) {
+      updates.permissions = normalizePermissions(req.body.role || current.role, req.body.permissions);
+    }
+    if (typeof req.body.password === "string" && req.body.password.trim()) {
+      updates.password = req.body.password;
+    }
+
+    const updated = updateEntity("users", req.params.id, req.user.clinicId, updates);
+    res.json(sanitizeUser(updated));
+  });
+
   app.get("/api/reports/medical", requireRole(["admin", "doctor", "midwife"]), (req, res) => {
     res.json(getMedicalReport(req.user.clinicId));
   });
@@ -134,4 +207,27 @@ function registerCrud(app, name, access) {
     });
     res.status(201).json(created);
   });
+}
+
+function sanitizeUser(user) {
+  const { password, ...safeUser } = user;
+  return safeUser;
+}
+
+function normalizePermissions(role, permissions) {
+  const defaults = {
+    admin: ["patients", "finance", "reports", "inventory", "staff", "users"],
+    doctor: ["patients", "reports", "appointments"],
+    midwife: ["patients", "births", "appointments"],
+    nurse: ["patients", "births"],
+    pharmacist: ["inventory"],
+    accountant: ["finance", "reports"],
+    receptionist: ["patients", "appointments", "invoices"]
+  };
+
+  if (!Array.isArray(permissions) || permissions.length === 0) {
+    return defaults[role] || [];
+  }
+
+  return Array.from(new Set(permissions));
 }

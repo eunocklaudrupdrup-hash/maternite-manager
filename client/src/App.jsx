@@ -9,6 +9,7 @@ const sections = [
   { key: "inventory", label: "Pharmacie" },
   { key: "finance", label: "Caisse" },
   { key: "staff", label: "Personnel" },
+  { key: "users", label: "Utilisateurs" },
   { key: "reports", label: "Rapports" }
 ];
 
@@ -19,8 +20,11 @@ const initialForms = {
   inventory: { name: "", category: "Medicament", quantity: "", unit: "", lowStockThreshold: "", price: "" },
   invoices: { patientName: "", item: "", amount: "", status: "Paye", paymentMethod: "Especes" },
   expenses: { label: "", amount: "", category: "General" },
-  staff: { fullName: "", role: "", department: "", phone: "", schedule: "", performanceScore: "" }
+  staff: { fullName: "", role: "", department: "", phone: "", schedule: "", performanceScore: "" },
+  users: { fullName: "", email: "", role: "receptionist", password: "", permissionsText: "patients,appointments,invoices", isActive: true }
 };
+
+const availablePermissions = ["patients", "appointments", "births", "inventory", "finance", "reports", "staff", "users", "invoices"];
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -34,6 +38,7 @@ export default function App() {
     invoices: [],
     expenses: [],
     staff: [],
+    users: [],
     reports: null
   });
   const [forms, setForms] = useState(initialForms);
@@ -58,7 +63,7 @@ export default function App() {
     setLoading(true);
     setError("");
     try {
-      const [dashboard, patients, appointments, births, inventory, invoices, expenses, staff] = await Promise.all([
+      const requests = [
         apiRequest("/dashboard"),
         apiRequest("/patients"),
         apiRequest("/appointments"),
@@ -67,7 +72,14 @@ export default function App() {
         apiRequest("/invoices"),
         apiRequest("/expenses"),
         apiRequest("/staff")
-      ]);
+      ];
+
+      if (session.role === "admin") {
+        requests.push(apiRequest("/users"));
+      }
+
+      const [dashboard, patients, appointments, births, inventory, invoices, expenses, staff, users = []] =
+        await Promise.all(requests);
 
       let reports = null;
       try {
@@ -79,7 +91,7 @@ export default function App() {
         reports = null;
       }
 
-      setData({ dashboard, patients, appointments, births, inventory, invoices, expenses, staff, reports });
+      setData({ dashboard, patients, appointments, births, inventory, invoices, expenses, staff, users, reports });
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -121,6 +133,75 @@ export default function App() {
         body: JSON.stringify(forms[resourceKey])
       });
       setForms((current) => ({ ...current, [resourceKey]: initialForms[resourceKey] }));
+      await loadAll();
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function createUser() {
+    setError("");
+    try {
+      const payload = {
+        fullName: forms.users.fullName,
+        email: forms.users.email,
+        role: forms.users.role,
+        password: forms.users.password,
+        isActive: forms.users.isActive,
+        permissions: parsePermissions(forms.users.permissionsText)
+      };
+      const response = await apiRequest("/users", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      setForms((current) => ({
+        ...current,
+        users: initialForms.users
+      }));
+      await loadAll();
+      window.alert(`Utilisateur cree. Mot de passe temporaire: ${response.temporaryPassword}`);
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function toggleUserActivation(user) {
+    try {
+      await apiRequest(`/users/${user.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: !user.isActive })
+      });
+      await loadAll();
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function resetPassword(user) {
+    const nextPassword = window.prompt(`Nouveau mot de passe pour ${user.fullName}`, "Temp1234!");
+    if (!nextPassword) {
+      return;
+    }
+    try {
+      await apiRequest(`/users/${user.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ password: nextPassword })
+      });
+      window.alert("Mot de passe reinitialise.");
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function savePermissions(user, permissionsText, role) {
+    try {
+      await apiRequest(`/users/${user.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          role,
+          permissions: parsePermissions(permissionsText)
+        })
+      });
       await loadAll();
     } catch (submitError) {
       setError(submitError.message);
@@ -327,6 +408,70 @@ export default function App() {
           </SectionLayout>
         )}
 
+        {activeSection === "users" && (
+          <section className="grid two-columns">
+            <article className="panel">
+              <h3>Gestion des utilisateurs</h3>
+              {session.role !== "admin" ? (
+                <p className="muted">Acces reserve a l'administrateur.</p>
+              ) : (
+                <div className="stack">
+                  {data.users.map((user) => (
+                    <UserCard
+                      key={user.id}
+                      user={user}
+                      onToggle={() => toggleUserActivation(user)}
+                      onResetPassword={() => resetPassword(user)}
+                      onSave={savePermissions}
+                    />
+                  ))}
+                </div>
+              )}
+            </article>
+            <article className="panel">
+              <h3>Creer un utilisateur</h3>
+              {session.role !== "admin" ? (
+                <p className="muted">Seul l'administrateur peut creer des comptes.</p>
+              ) : (
+                <form
+                  className="stack compact"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    createUser();
+                  }}
+                >
+                  <label>
+                    Nom complet
+                    <input value={forms.users.fullName} onChange={(event) => updateForm("users", { ...forms.users, fullName: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Email
+                    <input type="email" value={forms.users.email} onChange={(event) => updateForm("users", { ...forms.users, email: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Role
+                    <input value={forms.users.role} onChange={(event) => updateForm("users", { ...forms.users, role: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Mot de passe initial
+                    <input value={forms.users.password} onChange={(event) => updateForm("users", { ...forms.users, password: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Permissions
+                    <input value={forms.users.permissionsText} onChange={(event) => updateForm("users", { ...forms.users, permissionsText: event.target.value }, setForms)} />
+                  </label>
+                  <label className="checkbox-row">
+                    <input type="checkbox" checked={forms.users.isActive} onChange={(event) => updateForm("users", { ...forms.users, isActive: event.target.checked }, setForms)} />
+                    Compte actif
+                  </label>
+                  <p className="hint">Permissions disponibles: {availablePermissions.join(", ")}</p>
+                  <button type="submit">Creer le compte</button>
+                </form>
+              )}
+            </article>
+          </section>
+        )}
+
         {activeSection === "reports" && (
           <section className="grid two-columns">
             <article className="panel">
@@ -428,4 +573,54 @@ function SimpleTable({ rows, columns }) {
       </table>
     </div>
   );
+}
+
+function UserCard({ user, onToggle, onResetPassword, onSave }) {
+  const [role, setRole] = useState(user.role);
+  const [permissionsText, setPermissionsText] = useState((user.permissions || []).join(","));
+
+  useEffect(() => {
+    setRole(user.role);
+    setPermissionsText((user.permissions || []).join(","));
+  }, [user]);
+
+  return (
+    <article className="user-card">
+      <div className="user-card-head">
+        <div>
+          <strong>{user.fullName}</strong>
+          <p className="muted">{user.email}</p>
+        </div>
+        <span className={user.isActive ? "status-active" : "status-inactive"}>
+          {user.isActive ? "Actif" : "Inactif"}
+        </span>
+      </div>
+      <label>
+        Role
+        <input value={role} onChange={(event) => setRole(event.target.value)} />
+      </label>
+      <label>
+        Permissions
+        <input value={permissionsText} onChange={(event) => setPermissionsText(event.target.value)} />
+      </label>
+      <div className="user-actions">
+        <button type="button" onClick={() => onSave(user, permissionsText, role)}>
+          Enregistrer les droits
+        </button>
+        <button type="button" className="secondary" onClick={onToggle}>
+          {user.isActive ? "Desactiver" : "Activer"}
+        </button>
+        <button type="button" className="secondary" onClick={onResetPassword}>
+          Reinitialiser mot de passe
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function parsePermissions(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }

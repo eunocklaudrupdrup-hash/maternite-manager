@@ -66,6 +66,26 @@ export function addEntity(name, payload) {
   return entity;
 }
 
+export function updateEntity(name, id, clinicId, updates) {
+  const db = getDb();
+  const collection = db[name] || [];
+  const index = collection.findIndex((item) => item.id === id && item.clinicId === clinicId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const next = {
+    ...collection[index],
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+
+  collection[index] = next;
+  saveDb(db);
+  return next;
+}
+
 function buildMonthlyTotals(invoices, expenses) {
   const months = {};
   for (const invoice of invoices) {

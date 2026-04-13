@@ -44,6 +44,11 @@ input {
   background: rgba(255, 255, 255, 0.86);
 }
 
+input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
 label {
   display: block;
   font-weight: 600;
@@ -207,6 +212,50 @@ td {
 .report-list p,
 .lead {
   line-height: 1.6;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.user-card {
+  border: 1px solid rgba(20, 49, 38, 0.09);
+  border-radius: 18px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.user-card-head,
+.user-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-actions {
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.status-active,
+.status-inactive {
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.status-active {
+  background: rgba(20, 108, 67, 0.12);
+  color: #146c43;
+}
+
+.status-inactive {
+  background: rgba(180, 35, 24, 0.12);
+  color: #b42318;
 }
 
 @media (max-width: 1100px) {

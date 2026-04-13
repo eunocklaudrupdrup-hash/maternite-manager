@@ -22,6 +22,7 @@ export function createSeedData() {
         email: "admin@demo.maternite",
         password: "admin123",
         role: "admin",
+        isActive: true,
         permissions: ["patients", "finance", "reports", "inventory", "staff"]
       },
       {
@@ -31,6 +32,7 @@ export function createSeedData() {
         email: "reception@demo.maternite",
         password: "welcome123",
         role: "receptionist",
+        isActive: true,
         permissions: ["patients", "appointments", "invoices"]
       }
     ],

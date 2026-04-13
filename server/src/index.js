@@ -10,6 +10,20 @@ app.use(express.json({ limit: "2mb" }));
 createServerApp(app);
 
 const port = process.env.PORT || 4000;
-app.listen(port, () => {
-  console.log(`API maternite disponible sur http://localhost:${port}`);
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception during startup:", error);
 });
+
+process.on("unhandledRejection", (error) => {
+  console.error("Unhandled rejection during startup:", error);
+});
+
+try {
+  app.listen(port, () => {
+    console.log(`API maternite disponible sur http://localhost:${port}`);
+  });
+} catch (error) {
+  console.error("Server failed to start:", error);
+  process.exit(1);
+}

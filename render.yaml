@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: maternite-manager
+    env: node
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    plan: free
+    autoDeploy: true

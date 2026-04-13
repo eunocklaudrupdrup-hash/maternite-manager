@@ -1,0 +1,221 @@
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #143126;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 32%),
+    linear-gradient(135deg, #f6efe6 0%, #dff0e7 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: none;
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  cursor: pointer;
+  background: #146c43;
+  color: #fff;
+  font-weight: 700;
+}
+
+button.secondary {
+  background: rgba(20, 108, 67, 0.14);
+  color: #146c43;
+}
+
+input {
+  width: 100%;
+  margin-top: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid rgba(20, 49, 38, 0.15);
+  padding: 0.85rem 0.95rem;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  color: #26463c;
+}
+
+.auth-shell,
+.app-shell {
+  min-height: 100vh;
+}
+
+.auth-shell {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.auth-card {
+  width: min(560px, 100%);
+  background: rgba(255, 252, 247, 0.92);
+  border: 1px solid rgba(20, 49, 38, 0.08);
+  border-radius: 30px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(20, 49, 38, 0.12);
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+}
+
+.sidebar {
+  padding: 2rem 1.25rem;
+  background: rgba(15, 61, 44, 0.92);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.two-columns {
+  grid-template-columns: 1.2fr 0.9fr;
+}
+
+.panel {
+  background: rgba(255, 252, 247, 0.9);
+  border: 1px solid rgba(20, 49, 38, 0.08);
+  border-radius: 24px;
+  padding: 1.25rem;
+  box-shadow: 0 20px 45px rgba(20, 49, 38, 0.08);
+}
+
+.stat-card strong {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.7rem;
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.compact {
+  gap: 0.8rem;
+}
+
+.menu {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.menu-item {
+  text-align: left;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  padding: 0.85rem 1rem;
+}
+
+.menu-item.active {
+  background: rgba(255, 255, 255, 0.13);
+  color: white;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  color: #6f877d;
+  margin: 0 0 0.4rem;
+}
+
+.sidebar .eyebrow,
+.sidebar .muted {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.muted,
+.hint {
+  color: #678277;
+}
+
+.badge,
+.status-pill {
+  display: inline-block;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(228, 247, 238, 0.9);
+  color: #146c43;
+  font-weight: 700;
+}
+
+.sidebar .badge {
+  background: rgba(255, 255, 255, 0.14);
+  color: white;
+}
+
+.error {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.table-wrapper {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid rgba(20, 49, 38, 0.09);
+  font-size: 0.95rem;
+}
+
+.report-list p,
+.lead {
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .cards,
+  .two-columns {
+    grid-template-columns: 1fr;
+  }
+}

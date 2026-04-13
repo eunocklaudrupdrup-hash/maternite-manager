@@ -133,7 +133,7 @@ export function createClinicWithAdmins({ clinic, admins }) {
 
   db.clinics.unshift(createdClinic);
   db.users.unshift(...createdAdmins);
-  db.logs.unshift({
+  db.logs.unshift(
     buildLogEntry({
       clinicId,
       action: "create:clinic",

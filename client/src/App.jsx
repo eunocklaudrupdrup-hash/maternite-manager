@@ -24,11 +24,24 @@ const initialForms = {
   invoices: { patientName: "", item: "", amount: "", status: "Paye", paymentMethod: "Especes" },
   expenses: { label: "", amount: "", category: "General" },
   staff: { fullName: "", role: "", department: "", phone: "", schedule: "", performanceScore: "" },
-  users: { fullName: "", email: "", role: "receptionist", password: "", permissionsText: "patients,appointments,invoices", isActive: true },
+  users: { fullName: "", email: "", role: "receptionist", password: "", permissions: ["patients", "appointments", "invoices"], isActive: true },
   serviceStatuses: { label: "", price: "" }
 };
 
-const availablePermissions = ["patients", "appointments", "births", "inventory", "finance", "reports", "staff", "users", "invoices"];
+const availablePermissions = [
+  { key: "clinic", label: "Clinique" },
+  { key: "serviceStatuses", label: "Statuts" },
+  { key: "patients", label: "Patientes" },
+  { key: "appointments", label: "Rendez-vous" },
+  { key: "births", label: "Naissances" },
+  { key: "inventory", label: "Pharmacie" },
+  { key: "finance", label: "Caisse" },
+  { key: "staff", label: "Personnel" },
+  { key: "users", label: "Utilisateurs" },
+  { key: "activity", label: "Activite" },
+  { key: "reports", label: "Rapports" },
+  { key: "invoices", label: "Facturation" }
+];
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -93,6 +106,14 @@ export default function App() {
       loadAll();
     }
   }, [session]);
+
+  useEffect(() => {
+    if (session && !canAccessSection(session, activeSection)) {
+      setActiveSection("dashboard");
+    }
+  }, [session, activeSection]);
+
+  const visibleSections = sections.filter((section) => canAccessSection(session, section.key));
 
   async function loadAll() {
     setLoading(true);
@@ -234,7 +255,7 @@ export default function App() {
         role: forms.users.role,
         password: forms.users.password,
         isActive: forms.users.isActive,
-        permissions: parsePermissions(forms.users.permissionsText)
+        permissions: forms.users.permissions
       };
       const response = await apiRequest("/users", {
         method: "POST",
@@ -279,13 +300,13 @@ export default function App() {
     }
   }
 
-  async function savePermissions(user, permissionsText, role) {
+  async function savePermissions(user, permissions, role) {
     try {
       await apiRequest(`/users/${user.id}`, {
         method: "PATCH",
         body: JSON.stringify({
           role,
-          permissions: parsePermissions(permissionsText)
+          permissions
         })
       });
       await loadAll();
@@ -585,7 +606,7 @@ export default function App() {
           <p className="badge">{session.role}</p>
         </div>
         <nav className="menu">
-          {sections.map((section) => (
+          {visibleSections.map((section) => (
             <button
               key={section.key}
               className={section.key === activeSection ? "menu-item active" : "menu-item"}
@@ -949,15 +970,14 @@ export default function App() {
                     Mot de passe initial
                     <input value={forms.users.password} onChange={(event) => updateForm("users", { ...forms.users, password: event.target.value }, setForms)} />
                   </label>
-                  <label>
-                    Permissions
-                    <input value={forms.users.permissionsText} onChange={(event) => updateForm("users", { ...forms.users, permissionsText: event.target.value }, setForms)} />
-                  </label>
+                  <PermissionSelector
+                    selected={forms.users.permissions}
+                    onChange={(permissions) => updateForm("users", { ...forms.users, permissions }, setForms)}
+                  />
                   <label className="checkbox-row">
                     <input type="checkbox" checked={forms.users.isActive} onChange={(event) => updateForm("users", { ...forms.users, isActive: event.target.checked }, setForms)} />
                     Compte actif
                   </label>
-                  <p className="hint">Permissions disponibles: {availablePermissions.join(", ")}</p>
                   <button type="submit">Creer le compte</button>
                 </form>
               )}
@@ -1417,13 +1437,13 @@ function SalesTable({ rows }) {
 
 function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
   const [role, setRole] = useState(user.role);
-  const [permissionsText, setPermissionsText] = useState((user.permissions || []).join(","));
+  const [permissions, setPermissions] = useState(user.permissions || []);
   const [fullName, setFullName] = useState(user.fullName);
   const [email, setEmail] = useState(user.email);
 
   useEffect(() => {
     setRole(user.role);
-    setPermissionsText((user.permissions || []).join(","));
+    setPermissions(user.permissions || []);
     setFullName(user.fullName);
     setEmail(user.email);
   }, [user]);
@@ -1451,10 +1471,7 @@ function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
         Role
         <input value={role} onChange={(event) => setRole(event.target.value)} />
       </label>
-      <label>
-        Permissions
-        <input value={permissionsText} onChange={(event) => setPermissionsText(event.target.value)} />
-      </label>
+      <PermissionSelector selected={permissions} onChange={setPermissions} />
       <div className="user-actions">
         <button
           type="button"
@@ -1462,7 +1479,7 @@ function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
         >
           Modifier profil
         </button>
-        <button type="button" onClick={() => onSave(user, permissionsText, role)}>
+        <button type="button" onClick={() => onSave(user, permissions, role)}>
           Enregistrer les droits
         </button>
         <button type="button" className="secondary" onClick={onToggle}>
@@ -1476,11 +1493,46 @@ function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
   );
 }
 
-function parsePermissions(value) {
-  return String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+function PermissionSelector({ selected, onChange }) {
+  return (
+    <fieldset className="permission-box">
+      <legend>Permissions</legend>
+      <div className="permission-grid">
+        {availablePermissions.map((permission) => (
+          <label key={permission.key} className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={selected.includes(permission.key)}
+              onChange={(event) => {
+                if (event.target.checked) {
+                  onChange([...selected, permission.key]);
+                } else {
+                  onChange(selected.filter((item) => item !== permission.key));
+                }
+              }}
+            />
+            {permission.label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function canAccessSection(session, sectionKey) {
+  if (!session) {
+    return false;
+  }
+
+  if (sectionKey === "dashboard") {
+    return true;
+  }
+
+  if (session.role === "admin") {
+    return true;
+  }
+
+  return Array.isArray(session.permissions) && session.permissions.includes(sectionKey);
 }
 
 function fileToDataUrl(file) {

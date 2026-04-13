@@ -18,7 +18,7 @@ const initialForms = {
   patients: { fullName: "", age: "", phone: "", pregnancyWeeks: "", status: "Suivi prenatal", history: "" },
   appointments: { patientName: "", service: "", staffName: "", date: "", time: "", status: "Confirme" },
   births: { motherName: "", babyName: "", sex: "Feminin", weightKg: "", heightCm: "", deliveryType: "Naturel", complications: "", birthDate: "", birthTime: "", motherStatus: "Stable", babyStatus: "Stable" },
-  inventory: { name: "", category: "Medicament", quantity: "", unit: "", lowStockThreshold: "", price: "" },
+  inventory: { name: "", category: "Medicament", photo: "", quantity: "", unit: "", lowStockThreshold: "", price: "" },
   invoices: { patientName: "", item: "", amount: "", status: "Paye", paymentMethod: "Especes" },
   expenses: { label: "", amount: "", category: "General" },
   staff: { fullName: "", role: "", department: "", phone: "", schedule: "", performanceScore: "" },
@@ -308,6 +308,25 @@ export default function App() {
       setClinicForm((current) => ({ ...current, logo: dataUrl }));
     } catch {
       setError("Impossible de charger ce logo.");
+    }
+  }
+
+  async function handleInventoryPhotoUpload(file) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setForms((current) => ({
+        ...current,
+        inventory: {
+          ...current.inventory,
+          photo: dataUrl
+        }
+      }));
+    } catch {
+      setError("Impossible de charger l'image du produit.");
     }
   }
 
@@ -665,15 +684,47 @@ export default function App() {
           <SectionLayout
             title="Pharmacie"
             form={
-              <ResourceForm
-                fields={[["name", "Produit"], ["category", "Categorie"], ["quantity", "Quantite", "number"], ["unit", "Unite"], ["lowStockThreshold", "Seuil d'alerte", "number"], ["price", "Prix", "number"]]}
-                value={forms.inventory}
-                onChange={(value) => updateForm("inventory", value, setForms)}
-                onSubmit={() => submitResource("inventory", "inventory")}
-              />
+              <form
+                className="stack compact"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitResource("inventory", "inventory");
+                }}
+              >
+                <label>
+                  Produit
+                  <input value={forms.inventory.name} onChange={(event) => updateForm("inventory", { ...forms.inventory, name: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Categorie
+                  <input value={forms.inventory.category} onChange={(event) => updateForm("inventory", { ...forms.inventory, category: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Photo du produit
+                  <input type="file" accept="image/*" onChange={(event) => handleInventoryPhotoUpload(event.target.files?.[0])} />
+                </label>
+                {forms.inventory.photo ? <img className="product-photo" src={forms.inventory.photo} alt="Apercu produit" /> : null}
+                <label>
+                  Quantite
+                  <input type="number" value={forms.inventory.quantity} onChange={(event) => updateForm("inventory", { ...forms.inventory, quantity: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Unite
+                  <input value={forms.inventory.unit} onChange={(event) => updateForm("inventory", { ...forms.inventory, unit: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Seuil d'alerte
+                  <input type="number" value={forms.inventory.lowStockThreshold} onChange={(event) => updateForm("inventory", { ...forms.inventory, lowStockThreshold: event.target.value }, setForms)} />
+                </label>
+                <label>
+                  Prix
+                  <input type="number" value={forms.inventory.price} onChange={(event) => updateForm("inventory", { ...forms.inventory, price: event.target.value }, setForms)} />
+                </label>
+                <button type="submit">Enregistrer</button>
+              </form>
             }
           >
-            <SimpleTable rows={data.inventory} columns={["name", "category", "quantity", "unit", "price"]} />
+            <InventoryList rows={data.inventory} />
           </SectionLayout>
         )}
 
@@ -882,6 +933,27 @@ function SimpleTable({ rows, columns }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function InventoryList({ rows }) {
+  if (!rows?.length) {
+    return <p className="muted">Aucune donnee disponible.</p>;
+  }
+
+  return (
+    <div className="inventory-grid">
+      {rows.map((row) => (
+        <article key={row.id} className="inventory-card">
+          {row.photo ? <img className="product-photo" src={row.photo} alt={row.name} /> : null}
+          <strong>{row.name}</strong>
+          <p className="muted">{row.category}</p>
+          <p>Stock: {row.quantity} {row.unit}</p>
+          <p>Prix: {row.price} FCFA</p>
+          <p>Seuil: {row.lowStockThreshold}</p>
+        </article>
+      ))}
     </div>
   );
 }

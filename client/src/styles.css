@@ -259,6 +259,31 @@ td {
   background: rgba(255, 255, 255, 0.8);
 }
 
+.product-photo {
+  width: 100%;
+  max-width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid rgba(20, 49, 38, 0.08);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.inventory-card {
+  border: 1px solid rgba(20, 49, 38, 0.09);
+  border-radius: 18px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  display: grid;
+  gap: 0.55rem;
+}
+
 .user-card-head,
 .user-actions {
   display: flex;

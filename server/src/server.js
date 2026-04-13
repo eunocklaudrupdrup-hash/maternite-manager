@@ -264,11 +264,25 @@ export function createServerApp(app) {
   });
 
   app.get("/api/reports/medical", requireRole(["admin", "doctor", "midwife"]), (req, res) => {
-    res.json(getMedicalReport(req.user.clinicId));
+    res.json(
+      getMedicalReport(req.user.clinicId, {
+        mode: req.query.mode,
+        date: req.query.date,
+        month: req.query.month,
+        year: req.query.year
+      })
+    );
   });
 
   app.get("/api/reports/financial", requireRole(["admin", "accountant"]), (req, res) => {
-    res.json(getFinancialReport(req.user.clinicId));
+    res.json(
+      getFinancialReport(req.user.clinicId, {
+        mode: req.query.mode,
+        date: req.query.date,
+        month: req.query.month,
+        year: req.query.year
+      })
+    );
   });
 
   if (fs.existsSync(clientDistPath)) {

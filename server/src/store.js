@@ -178,24 +178,40 @@ export function getDashboardData(clinicId) {
   };
 }
 
-export function getMedicalReport(clinicId) {
+export function getMedicalReport(clinicId, filters = {}) {
   const db = getDb();
   const patients = db.patients.filter((item) => item.clinicId === clinicId);
-  const births = db.births.filter((item) => item.clinicId === clinicId);
+  const births = filterByPeriod(
+    db.births.filter((item) => item.clinicId === clinicId),
+    (item) => item.birthDate || item.createdAt,
+    filters
+  );
   return {
+    period: filters,
     totalPatients: patients.length,
     cSections: births.filter((item) => item.deliveryType === "Cesarienne").length,
     naturalBirths: births.filter((item) => item.deliveryType === "Naturel").length,
     complications: births.filter((item) => item.complications).length,
+    birthsCount: births.length,
+    births: births.slice(0, 100),
     recentPatients: patients.slice(0, 10)
   };
 }
 
-export function getFinancialReport(clinicId) {
+export function getFinancialReport(clinicId, filters = {}) {
   const db = getDb();
-  const invoices = db.invoices.filter((item) => item.clinicId === clinicId);
-  const expenses = db.expenses.filter((item) => item.clinicId === clinicId);
+  const invoices = filterByPeriod(
+    db.invoices.filter((item) => item.clinicId === clinicId),
+    (item) => item.createdAt,
+    filters
+  );
+  const expenses = filterByPeriod(
+    db.expenses.filter((item) => item.clinicId === clinicId),
+    (item) => item.createdAt,
+    filters
+  );
   return {
+    period: filters,
     totalRevenue: invoices.reduce((sum, item) => sum + Number(item.amount || 0), 0),
     totalExpenses: expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0),
     invoiceCount: invoices.length,
@@ -203,4 +219,38 @@ export function getFinancialReport(clinicId) {
     invoices: invoices.slice(0, 20),
     expenses: expenses.slice(0, 20)
   };
+}
+
+function filterByPeriod(items, getDateValue, filters) {
+  const mode = filters.mode || "all";
+  const date = filters.date || "";
+  const month = filters.month || "";
+  const year = filters.year || "";
+
+  if (mode === "all") {
+    return items;
+  }
+
+  return items.filter((item) => {
+    const raw = String(getDateValue(item) || "");
+    const normalized = raw.includes("T") ? raw.slice(0, 10) : raw;
+
+    if (!normalized) {
+      return false;
+    }
+
+    if (mode === "date") {
+      return normalized === date;
+    }
+
+    if (mode === "month") {
+      return normalized.slice(0, 7) === month;
+    }
+
+    if (mode === "year") {
+      return normalized.slice(0, 4) === year;
+    }
+
+    return true;
+  });
 }

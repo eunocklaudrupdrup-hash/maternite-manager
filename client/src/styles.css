@@ -16,7 +16,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -35,7 +36,8 @@ button.secondary {
   color: #146c43;
 }
 
-input {
+input,
+select {
   width: 100%;
   margin-top: 0.35rem;
   border-radius: 12px;
@@ -282,6 +284,13 @@ td {
   background: rgba(255, 255, 255, 0.72);
   display: grid;
   gap: 0.55rem;
+}
+
+.report-filter {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: end;
 }
 
 .user-card-head,

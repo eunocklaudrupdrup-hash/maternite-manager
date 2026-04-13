@@ -47,6 +47,12 @@ export default function App() {
   const [forms, setForms] = useState(initialForms);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [reportFilter, setReportFilter] = useState({
+    mode: "all",
+    date: "",
+    month: "",
+    year: new Date().getFullYear().toString()
+  });
   const [clinicForm, setClinicForm] = useState({
     name: "",
     address: "",
@@ -107,9 +113,10 @@ export default function App() {
 
       let reports = null;
       try {
+        const query = buildReportQuery(reportFilter);
         reports = {
-          medical: await apiRequest("/reports/medical"),
-          financial: await apiRequest("/reports/financial")
+          medical: await apiRequest(`/reports/medical${query}`),
+          financial: await apiRequest(`/reports/financial${query}`)
         };
       } catch {
         reports = null;
@@ -835,31 +842,101 @@ export default function App() {
         )}
 
         {activeSection === "reports" && (
-          <section className="grid two-columns">
+          <section className="stack">
             <article className="panel">
-              <h3>Rapport medical</h3>
+              <h3>Filtrer les rapports</h3>
+              <form
+                className="report-filter"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  loadAll();
+                }}
+              >
+                <label>
+                  Type de periode
+                  <select
+                    value={reportFilter.mode}
+                    onChange={(event) => setReportFilter({ ...reportFilter, mode: event.target.value })}
+                  >
+                    <option value="all">Tout</option>
+                    <option value="date">Par date</option>
+                    <option value="month">Par mois</option>
+                    <option value="year">Par annee</option>
+                  </select>
+                </label>
+                {reportFilter.mode === "date" ? (
+                  <label>
+                    Date
+                    <input
+                      type="date"
+                      value={reportFilter.date}
+                      onChange={(event) => setReportFilter({ ...reportFilter, date: event.target.value })}
+                    />
+                  </label>
+                ) : null}
+                {reportFilter.mode === "month" ? (
+                  <label>
+                    Mois
+                    <input
+                      type="month"
+                      value={reportFilter.month}
+                      onChange={(event) => setReportFilter({ ...reportFilter, month: event.target.value })}
+                    />
+                  </label>
+                ) : null}
+                {reportFilter.mode === "year" ? (
+                  <label>
+                    Annee
+                    <input
+                      type="number"
+                      value={reportFilter.year}
+                      onChange={(event) => setReportFilter({ ...reportFilter, year: event.target.value })}
+                    />
+                  </label>
+                ) : null}
+                <button type="submit">Voir le rapport</button>
+              </form>
+            </article>
+
+            <div className="grid two-columns">
+              <article className="panel">
+                <h3>Rapport medical</h3>
+                {data.reports?.medical ? (
+                  <div className="report-list">
+                    <p>Total patientes: {data.reports.medical.totalPatients}</p>
+                    <p>Accouchements sur la periode: {data.reports.medical.birthsCount}</p>
+                    <p>Accouchements naturels: {data.reports.medical.naturalBirths}</p>
+                    <p>Cesariennes: {data.reports.medical.cSections}</p>
+                    <p>Cas avec complications: {data.reports.medical.complications}</p>
+                  </div>
+                ) : (
+                  <p className="muted">Acces reserve aux profils medicaux et administratifs.</p>
+                )}
+              </article>
+              <article className="panel">
+                <h3>Rapport financier</h3>
+                {data.reports?.financial ? (
+                  <div className="report-list">
+                    <p>Revenus totaux: {data.reports.financial.totalRevenue} FCFA</p>
+                    <p>Depenses totales: {data.reports.financial.totalExpenses} FCFA</p>
+                    <p>Nombre de factures: {data.reports.financial.invoiceCount}</p>
+                    <p>Nombre de depenses: {data.reports.financial.expenseCount}</p>
+                  </div>
+                ) : (
+                  <p className="muted">Acces reserve aux profils financiers et administratifs.</p>
+                )}
+              </article>
+            </div>
+
+            <article className="panel">
+              <h3>Liste des accouchements sur la periode</h3>
               {data.reports?.medical ? (
-                <div className="report-list">
-                  <p>Total patientes: {data.reports.medical.totalPatients}</p>
-                  <p>Accouchements naturels: {data.reports.medical.naturalBirths}</p>
-                  <p>Cesariennes: {data.reports.medical.cSections}</p>
-                  <p>Cas avec complications: {data.reports.medical.complications}</p>
-                </div>
+                <SimpleTable
+                  rows={data.reports.medical.births || []}
+                  columns={["motherName", "babyName", "deliveryType", "birthDate", "birthTime", "motherStatus", "babyStatus"]}
+                />
               ) : (
                 <p className="muted">Acces reserve aux profils medicaux et administratifs.</p>
-              )}
-            </article>
-            <article className="panel">
-              <h3>Rapport financier</h3>
-              {data.reports?.financial ? (
-                <div className="report-list">
-                  <p>Revenus totaux: {data.reports.financial.totalRevenue} FCFA</p>
-                  <p>Depenses totales: {data.reports.financial.totalExpenses} FCFA</p>
-                  <p>Nombre de factures: {data.reports.financial.invoiceCount}</p>
-                  <p>Nombre de depenses: {data.reports.financial.expenseCount}</p>
-                </div>
-              ) : (
-                <p className="muted">Acces reserve aux profils financiers et administratifs.</p>
               )}
             </article>
           </section>
@@ -1033,4 +1110,23 @@ function fileToDataUrl(file) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+function buildReportQuery(filter) {
+  const params = new URLSearchParams();
+  params.set("mode", filter.mode || "all");
+
+  if (filter.mode === "date" && filter.date) {
+    params.set("date", filter.date);
+  }
+
+  if (filter.mode === "month" && filter.month) {
+    params.set("month", filter.month);
+  }
+
+  if (filter.mode === "year" && filter.year) {
+    params.set("year", filter.year);
+  }
+
+  return `?${params.toString()}`;
 }

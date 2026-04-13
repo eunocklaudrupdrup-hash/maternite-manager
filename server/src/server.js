@@ -122,6 +122,32 @@ export function createServerApp(app) {
     res.json(req.user);
   });
 
+  app.get("/api/clinic", (req, res) => {
+    const db = getDb();
+    const clinic = db.clinics.find((item) => item.id === req.user.clinicId);
+    if (!clinic) {
+      return res.status(404).json({ message: "Clinique introuvable." });
+    }
+    res.json(clinic);
+  });
+
+  app.patch("/api/clinic", requireRole(["admin"]), (req, res) => {
+    const updates = {};
+    const editableFields = ["name", "address", "phone", "email", "type", "logo"];
+
+    for (const field of editableFields) {
+      if (typeof req.body?.[field] === "string") {
+        updates[field] = req.body[field];
+      }
+    }
+
+    const updated = updateEntity("clinics", req.user.clinicId, req.user.clinicId, updates);
+    if (!updated) {
+      return res.status(404).json({ message: "Clinique introuvable." });
+    }
+    res.json(updated);
+  });
+
   app.get("/api/dashboard", (req, res) => {
     res.json(getDashboardData(req.user.clinicId));
   });
@@ -207,6 +233,18 @@ export function createServerApp(app) {
     const updates = {};
     if (typeof req.body.fullName === "string") {
       updates.fullName = req.body.fullName;
+    }
+    if (typeof req.body.email === "string" && req.body.email.trim()) {
+      const duplicateEmail = db.users.some(
+        (item) =>
+          item.id !== current.id &&
+          item.clinicId === req.user.clinicId &&
+          item.email.toLowerCase() === req.body.email.toLowerCase()
+      );
+      if (duplicateEmail) {
+        return res.status(409).json({ message: "Cet email est deja utilise." });
+      }
+      updates.email = req.body.email;
     }
     if (typeof req.body.role === "string") {
       updates.role = req.body.role;

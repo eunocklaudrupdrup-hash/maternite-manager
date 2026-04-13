@@ -3,6 +3,7 @@ import { apiRequest } from "./api.js";
 
 const sections = [
   { key: "dashboard", label: "Dashboard" },
+  { key: "clinic", label: "Clinique" },
   { key: "patients", label: "Patientes" },
   { key: "appointments", label: "Rendez-vous" },
   { key: "births", label: "Naissances" },
@@ -32,6 +33,7 @@ export default function App() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [data, setData] = useState({
     dashboard: null,
+    clinic: null,
     patients: [],
     appointments: [],
     births: [],
@@ -45,6 +47,14 @@ export default function App() {
   const [forms, setForms] = useState(initialForms);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [clinicForm, setClinicForm] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    type: "",
+    logo: ""
+  });
   const [clinicSignup, setClinicSignup] = useState({
     clinic: {
       name: "",
@@ -78,6 +88,7 @@ export default function App() {
     try {
       const requests = [
         apiRequest("/dashboard"),
+        apiRequest("/clinic"),
         apiRequest("/patients"),
         apiRequest("/appointments"),
         apiRequest("/births"),
@@ -91,7 +102,7 @@ export default function App() {
         requests.push(apiRequest("/users"));
       }
 
-      const [dashboard, patients, appointments, births, inventory, invoices, expenses, staff, users = []] =
+      const [dashboard, clinic, patients, appointments, births, inventory, invoices, expenses, staff, users = []] =
         await Promise.all(requests);
 
       let reports = null;
@@ -104,7 +115,15 @@ export default function App() {
         reports = null;
       }
 
-      setData({ dashboard, patients, appointments, births, inventory, invoices, expenses, staff, users, reports });
+      setData({ dashboard, clinic, patients, appointments, births, inventory, invoices, expenses, staff, users, reports });
+      setClinicForm({
+        name: clinic?.name || "",
+        address: clinic?.address || "",
+        phone: clinic?.phone || "",
+        email: clinic?.email || "",
+        type: clinic?.type || "",
+        logo: clinic?.logo || ""
+      });
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -238,6 +257,31 @@ export default function App() {
           role,
           permissions: parsePermissions(permissionsText)
         })
+      });
+      await loadAll();
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function updateUser(userId, payload) {
+    try {
+      await apiRequest(`/users/${userId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      });
+      await loadAll();
+    } catch (submitError) {
+      setError(submitError.message);
+    }
+  }
+
+  async function saveClinic(event) {
+    event.preventDefault();
+    try {
+      await apiRequest("/clinic", {
+        method: "PATCH",
+        body: JSON.stringify(clinicForm)
       });
       await loadAll();
     } catch (submitError) {
@@ -477,6 +521,60 @@ export default function App() {
           </section>
         )}
 
+        {activeSection === "clinic" && (
+          <section className="grid two-columns">
+            <article className="panel">
+              <h3>Informations de la clinique</h3>
+              {data.clinic ? (
+                <div className="stack">
+                  {data.clinic.logo ? <img className="clinic-logo" src={data.clinic.logo} alt="Logo clinique" /> : null}
+                  <p><strong>Nom :</strong> {data.clinic.name}</p>
+                  <p><strong>Adresse :</strong> {data.clinic.address || "-"}</p>
+                  <p><strong>Telephone :</strong> {data.clinic.phone || "-"}</p>
+                  <p><strong>Email :</strong> {data.clinic.email || "-"}</p>
+                  <p><strong>Type :</strong> {data.clinic.type || "-"}</p>
+                </div>
+              ) : (
+                <p className="muted">Clinique introuvable.</p>
+              )}
+            </article>
+            <article className="panel">
+              <h3>Modifier la clinique</h3>
+              {session.role !== "admin" ? (
+                <p className="muted">Seul l'administrateur peut modifier la clinique.</p>
+              ) : (
+                <form className="stack compact" onSubmit={saveClinic}>
+                  <label>
+                    Nom
+                    <input value={clinicForm.name} onChange={(event) => setClinicForm({ ...clinicForm, name: event.target.value })} />
+                  </label>
+                  <label>
+                    Adresse
+                    <input value={clinicForm.address} onChange={(event) => setClinicForm({ ...clinicForm, address: event.target.value })} />
+                  </label>
+                  <label>
+                    Telephone
+                    <input value={clinicForm.phone} onChange={(event) => setClinicForm({ ...clinicForm, phone: event.target.value })} />
+                  </label>
+                  <label>
+                    Email
+                    <input type="email" value={clinicForm.email} onChange={(event) => setClinicForm({ ...clinicForm, email: event.target.value })} />
+                  </label>
+                  <label>
+                    Type
+                    <input value={clinicForm.type} onChange={(event) => setClinicForm({ ...clinicForm, type: event.target.value })} />
+                  </label>
+                  <label>
+                    URL du logo
+                    <input value={clinicForm.logo} onChange={(event) => setClinicForm({ ...clinicForm, logo: event.target.value })} placeholder="https://..." />
+                  </label>
+                  <button type="submit">Enregistrer la clinique</button>
+                </form>
+              )}
+            </article>
+          </section>
+        )}
+
         {activeSection === "patients" && (
           <SectionLayout
             title="Patientes"
@@ -597,6 +695,7 @@ export default function App() {
                       onToggle={() => toggleUserActivation(user)}
                       onResetPassword={() => resetPassword(user)}
                       onSave={savePermissions}
+                      onUpdate={updateUser}
                     />
                   ))}
                 </div>
@@ -749,13 +848,17 @@ function SimpleTable({ rows, columns }) {
   );
 }
 
-function UserCard({ user, onToggle, onResetPassword, onSave }) {
+function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
   const [role, setRole] = useState(user.role);
   const [permissionsText, setPermissionsText] = useState((user.permissions || []).join(","));
+  const [fullName, setFullName] = useState(user.fullName);
+  const [email, setEmail] = useState(user.email);
 
   useEffect(() => {
     setRole(user.role);
     setPermissionsText((user.permissions || []).join(","));
+    setFullName(user.fullName);
+    setEmail(user.email);
   }, [user]);
 
   return (
@@ -770,6 +873,14 @@ function UserCard({ user, onToggle, onResetPassword, onSave }) {
         </span>
       </div>
       <label>
+        Nom complet
+        <input value={fullName} onChange={(event) => setFullName(event.target.value)} />
+      </label>
+      <label>
+        Email
+        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+      </label>
+      <label>
         Role
         <input value={role} onChange={(event) => setRole(event.target.value)} />
       </label>
@@ -778,6 +889,12 @@ function UserCard({ user, onToggle, onResetPassword, onSave }) {
         <input value={permissionsText} onChange={(event) => setPermissionsText(event.target.value)} />
       </label>
       <div className="user-actions">
+        <button
+          type="button"
+          onClick={() => onUpdate(user.id, { fullName, email, role })}
+        >
+          Modifier profil
+        </button>
         <button type="button" onClick={() => onSave(user, permissionsText, role)}>
           Enregistrer les droits
         </button>

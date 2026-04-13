@@ -250,6 +250,15 @@ td {
   background: rgba(255, 255, 255, 0.72);
 }
 
+.clinic-logo {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 1px solid rgba(20, 49, 38, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+}
+
 .user-card-head,
 .user-actions {
   display: flex;

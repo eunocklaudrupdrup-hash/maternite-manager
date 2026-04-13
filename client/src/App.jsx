@@ -289,6 +289,28 @@ export default function App() {
     }
   }
 
+  async function handleClinicLogoUpload(file, mode) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+
+      if (mode === "signup") {
+        setClinicSignup((current) => ({
+          ...current,
+          clinic: { ...current.clinic, logo: dataUrl }
+        }));
+        return;
+      }
+
+      setClinicForm((current) => ({ ...current, logo: dataUrl }));
+    } catch {
+      setError("Impossible de charger ce logo.");
+    }
+  }
+
   if (!session) {
     return (
       <div className="auth-shell">
@@ -386,6 +408,17 @@ export default function App() {
                   })}
                 />
               </label>
+              <label>
+                Logo de la clinique
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleClinicLogoUpload(event.target.files?.[0], "signup")}
+                />
+              </label>
+              {clinicSignup.clinic.logo ? (
+                <img className="clinic-logo" src={clinicSignup.clinic.logo} alt="Apercu du logo" />
+              ) : null}
 
               {clinicSignup.admins.map((admin, index) => (
                 <div key={index} className="subpanel">
@@ -565,9 +598,14 @@ export default function App() {
                     <input value={clinicForm.type} onChange={(event) => setClinicForm({ ...clinicForm, type: event.target.value })} />
                   </label>
                   <label>
-                    URL du logo
-                    <input value={clinicForm.logo} onChange={(event) => setClinicForm({ ...clinicForm, logo: event.target.value })} placeholder="https://..." />
+                    Logo de la clinique
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => handleClinicLogoUpload(event.target.files?.[0], "edit")}
+                    />
                   </label>
+                  {clinicForm.logo ? <img className="clinic-logo" src={clinicForm.logo} alt="Logo clinique" /> : null}
                   <button type="submit">Enregistrer la clinique</button>
                 </form>
               )}
@@ -914,4 +952,13 @@ function parsePermissions(value) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }

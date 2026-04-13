@@ -105,6 +105,7 @@ export function createSeedData() {
         clinicId,
         name: "Oxytocine",
         category: "Medicament",
+        photo: "",
         quantity: 12,
         unit: "boites",
         lowStockThreshold: 10,

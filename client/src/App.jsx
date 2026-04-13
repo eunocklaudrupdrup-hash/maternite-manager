@@ -57,6 +57,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [authMode, setAuthMode] = useState("login");
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [installPrompt, setInstallPrompt] = useState(null);
   const [data, setData] = useState({
     dashboard: null,
     clinic: null,
@@ -116,6 +117,16 @@ export default function App() {
       loadAll();
     }
   }, [session]);
+
+  useEffect(() => {
+    function handleBeforeInstallPrompt(event) {
+      event.preventDefault();
+      setInstallPrompt(event);
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+  }, []);
 
   useEffect(() => {
     if (session && !canAccessSection(session, activeSection)) {
@@ -422,6 +433,16 @@ export default function App() {
     }
   }
 
+  async function handleInstallApp() {
+    if (!installPrompt) {
+      return;
+    }
+
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  }
+
   async function submitPharmacySale(event) {
     event.preventDefault();
     try {
@@ -655,7 +676,14 @@ export default function App() {
             <p className="eyebrow">Plateforme multi-utilisateurs</p>
             <h1>Tableau de bord de la clinique</h1>
           </div>
-          <div className="status-pill">{loading ? "Chargement..." : "Synchronise"}</div>
+          <div className="topbar-actions">
+            {installPrompt ? (
+              <button type="button" className="secondary" onClick={handleInstallApp}>
+                Installer l'application
+              </button>
+            ) : null}
+            <div className="status-pill">{loading ? "Chargement..." : "Synchronise"}</div>
+          </div>
         </header>
 
         {error ? <p className="error">{error}</p> : null}

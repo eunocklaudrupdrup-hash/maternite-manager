@@ -126,6 +126,13 @@ label {
   margin-bottom: 1.5rem;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .grid {
   display: grid;
   gap: 1rem;

@@ -336,13 +336,14 @@ export default function App() {
 
   async function payPatientStatus(patientId) {
     try {
-      await apiRequest("/cashier/pay-status", {
+      const response = await apiRequest("/cashier/pay-status", {
         method: "POST",
         body: JSON.stringify({
           patientId,
           paymentMethod: "Especes"
         })
       });
+      downloadReceipt(response.receipt);
       await loadAll();
     } catch (submitError) {
       setError(submitError.message);
@@ -868,7 +869,7 @@ export default function App() {
                 onChange={(value) => updateForm("invoices", value, setForms)}
                 onSubmit={() => submitResource("invoices", "invoices")}
               />
-              <SimpleTable rows={data.invoices} columns={["patientName", "item", "amount", "status", "paymentMethod"]} />
+              <InvoicesList rows={data.invoices} />
             </article>
             <article className="panel">
               <h3>Depenses</h3>
@@ -1296,6 +1297,50 @@ function PendingPaymentsList({ rows, onPay }) {
   );
 }
 
+function InvoicesList({ rows }) {
+  if (!rows?.length) {
+    return <p className="muted">Aucune donnee disponible.</p>;
+  }
+
+  return (
+    <div className="stack">
+      {rows.map((row) => (
+        <article key={row.id} className="user-card">
+          <div className="user-card-head">
+            <div>
+              <strong>{row.patientName || "-"}</strong>
+              <p className="muted">{row.item || "-"}</p>
+            </div>
+            <span className="status-active">{row.status || "-"}</span>
+          </div>
+          <p>Montant: {row.amount || 0} FCFA</p>
+          <p>Mode de paiement: {row.paymentMethod || "-"}</p>
+          <div className="user-actions">
+            <button
+              type="button"
+              onClick={() =>
+                downloadReceipt({
+                  clinicName: row.clinicName || "",
+                  clinicLogo: row.clinicLogo || "",
+                  patientName: row.patientName || "",
+                  patientAge: row.patientAge || "",
+                  patientPhone: row.patientPhone || "",
+                  status: row.item || "",
+                  amount: row.amount || 0,
+                  paidAt: row.paidAt || row.createdAt,
+                  cashierName: row.createdByName || ""
+                })
+              }
+            >
+              Telecharger le recu
+            </button>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function AuditTable({ rows }) {
   if (!rows?.length) {
     return <p className="muted">Aucune activite enregistree.</p>;
@@ -1526,4 +1571,82 @@ function buildLogDetails(row) {
 function getSelectedStatusPrice(serviceStatuses, serviceStatusId) {
   const item = serviceStatuses.find((status) => status.id === serviceStatusId);
   return item ? item.price : 0;
+}
+
+function downloadReceipt(receipt) {
+  if (!receipt) {
+    return;
+  }
+
+  const paidDate = new Date(receipt.paidAt || Date.now());
+  const dateText = paidDate.toLocaleDateString("fr-FR");
+  const timeText = paidDate.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  const html = `<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Recu de paiement</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 24px; color: #143126; }
+      .card { max-width: 720px; margin: 0 auto; border: 1px solid #d9e5de; border-radius: 18px; padding: 24px; }
+      .head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+      .logo { width: 84px; height: 84px; object-fit: cover; border-radius: 16px; border: 1px solid #d9e5de; }
+      h1 { margin: 0 0 8px; font-size: 24px; }
+      p { margin: 6px 0; }
+      .row { padding: 10px 0; border-bottom: 1px solid #eef4f0; }
+      .strong { font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="head">
+        <div>
+          <h1>${escapeHtml(receipt.clinicName || "Clinique")}</h1>
+          <p>Recu de paiement</p>
+        </div>
+        ${receipt.clinicLogo ? `<img class="logo" src="${receipt.clinicLogo}" alt="Logo clinique" />` : ""}
+      </div>
+      <div class="row"><span class="strong">Date :</span> ${dateText}</div>
+      <div class="row"><span class="strong">Heure :</span> ${timeText}</div>
+      <div class="row"><span class="strong">Patiente :</span> ${escapeHtml(receipt.patientName || "-")}</div>
+      <div class="row"><span class="strong">Age :</span> ${escapeHtml(String(receipt.patientAge || "-"))}</div>
+      <div class="row"><span class="strong">Telephone :</span> ${escapeHtml(receipt.patientPhone || "-")}</div>
+      <div class="row"><span class="strong">Statut :</span> ${escapeHtml(receipt.status || "-")}</div>
+      <div class="row"><span class="strong">Montant paye :</span> ${escapeHtml(String(receipt.amount || 0))} FCFA</div>
+      <div class="row"><span class="strong">Caisse :</span> ${escapeHtml(receipt.cashierName || "-")}</div>
+    </div>
+  </body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `recu-${slugify(receipt.patientName || "patiente")}-${paidDate.toISOString().slice(0, 10)}.html`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }

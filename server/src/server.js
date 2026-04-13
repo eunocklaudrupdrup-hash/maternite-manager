@@ -394,6 +394,7 @@ export function createServerApp(app) {
     const patient = db.patients.find(
       (item) => item.id === req.body?.patientId && item.clinicId === req.user.clinicId
     );
+    const clinic = db.clinics.find((item) => item.id === req.user.clinicId);
 
     if (!patient) {
       return res.status(404).json({ message: "Patiente introuvable." });
@@ -411,11 +412,17 @@ export function createServerApp(app) {
       clinicId: req.user.clinicId,
       createdBy: req.user.id,
       createdByName: req.user.fullName,
+      patientId: patient.id,
       patientName: patient.fullName,
+      patientAge: patient.age || "",
+      patientPhone: patient.phone || "",
       item: patient.serviceStatusLabel,
       amount: Number(patient.servicePrice || 0),
       status: "Paye",
-      paymentMethod: req.body?.paymentMethod || "Especes"
+      paymentMethod: req.body?.paymentMethod || "Especes",
+      clinicName: clinic?.name || "",
+      clinicLogo: clinic?.logo || "",
+      paidAt: new Date().toISOString()
     });
 
     const updatedPatient = updateEntity("patients", patient.id, req.user.clinicId, {
@@ -436,7 +443,21 @@ export function createServerApp(app) {
       }
     });
 
-    res.status(201).json({ invoice, patient: updatedPatient });
+    res.status(201).json({
+      invoice,
+      patient: updatedPatient,
+      receipt: {
+        clinicName: clinic?.name || "",
+        clinicLogo: clinic?.logo || "",
+        patientName: patient.fullName,
+        patientAge: patient.age || "",
+        patientPhone: patient.phone || "",
+        status: patient.serviceStatusLabel,
+        amount: Number(patient.servicePrice || 0),
+        paidAt: invoice.paidAt,
+        cashierName: req.user.fullName
+      }
+    });
   });
 
   app.get("/api/reports/medical", requireRole(["admin", "doctor", "midwife"]), (req, res) => {

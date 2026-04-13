@@ -21,6 +21,16 @@ const initialForms = {
   appointments: { patientName: "", service: "", staffName: "", date: "", time: "", status: "Confirme" },
   births: { motherName: "", babyName: "", sex: "Feminin", weightKg: "", heightCm: "", deliveryType: "Naturel", complications: "", birthDate: "", birthTime: "", motherStatus: "Stable", babyStatus: "Stable" },
   inventory: { name: "", category: "Medicament", photo: "", quantity: "", unit: "", lowStockThreshold: "", price: "" },
+  pharmacySale: {
+    productId: "",
+    quantity: "1",
+    customerType: "existing",
+    patientId: "",
+    customerName: "",
+    customerAge: "",
+    customerPhone: "",
+    paymentMethod: "Especes"
+  },
   invoices: { patientName: "", item: "", amount: "", status: "Paye", paymentMethod: "Especes" },
   expenses: { label: "", amount: "", category: "General" },
   staff: { fullName: "", role: "", department: "", phone: "", schedule: "", performanceScore: "" },
@@ -409,6 +419,24 @@ export default function App() {
       }));
     } catch {
       setError("Impossible de charger l'image du produit.");
+    }
+  }
+
+  async function submitPharmacySale(event) {
+    event.preventDefault();
+    try {
+      const response = await apiRequest("/pharmacy/sales", {
+        method: "POST",
+        body: JSON.stringify(forms.pharmacySale)
+      });
+      downloadReceipt(response.receipt);
+      setForms((current) => ({
+        ...current,
+        pharmacySale: initialForms.pharmacySale
+      }));
+      await loadAll();
+    } catch (submitError) {
+      setError(submitError.message);
     }
   }
 
@@ -832,44 +860,136 @@ export default function App() {
           <SectionLayout
             title="Pharmacie"
             form={
-              <form
-                className="stack compact"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  submitResource("inventory", "inventory");
-                }}
-              >
-                <label>
-                  Produit
-                  <input value={forms.inventory.name} onChange={(event) => updateForm("inventory", { ...forms.inventory, name: event.target.value }, setForms)} />
-                </label>
-                <label>
-                  Categorie
-                  <input value={forms.inventory.category} onChange={(event) => updateForm("inventory", { ...forms.inventory, category: event.target.value }, setForms)} />
-                </label>
-                <label>
-                  Photo du produit
-                  <input type="file" accept="image/*" onChange={(event) => handleInventoryPhotoUpload(event.target.files?.[0])} />
-                </label>
-                {forms.inventory.photo ? <img className="product-photo" src={forms.inventory.photo} alt="Apercu produit" /> : null}
-                <label>
-                  Quantite
-                  <input type="number" value={forms.inventory.quantity} onChange={(event) => updateForm("inventory", { ...forms.inventory, quantity: event.target.value }, setForms)} />
-                </label>
-                <label>
-                  Unite
-                  <input value={forms.inventory.unit} onChange={(event) => updateForm("inventory", { ...forms.inventory, unit: event.target.value }, setForms)} />
-                </label>
-                <label>
-                  Seuil d'alerte
-                  <input type="number" value={forms.inventory.lowStockThreshold} onChange={(event) => updateForm("inventory", { ...forms.inventory, lowStockThreshold: event.target.value }, setForms)} />
-                </label>
-                <label>
-                  Prix
-                  <input type="number" value={forms.inventory.price} onChange={(event) => updateForm("inventory", { ...forms.inventory, price: event.target.value }, setForms)} />
-                </label>
-                <button type="submit">Enregistrer</button>
-              </form>
+              <div className="stack">
+                <form
+                  className="stack compact"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    submitResource("inventory", "inventory");
+                  }}
+                >
+                  <label>
+                    Produit
+                    <input value={forms.inventory.name} onChange={(event) => updateForm("inventory", { ...forms.inventory, name: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Categorie
+                    <input value={forms.inventory.category} onChange={(event) => updateForm("inventory", { ...forms.inventory, category: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Photo du produit
+                    <input type="file" accept="image/*" onChange={(event) => handleInventoryPhotoUpload(event.target.files?.[0])} />
+                  </label>
+                  {forms.inventory.photo ? <img className="product-photo" src={forms.inventory.photo} alt="Apercu produit" /> : null}
+                  <label>
+                    Quantite
+                    <input type="number" value={forms.inventory.quantity} onChange={(event) => updateForm("inventory", { ...forms.inventory, quantity: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Unite
+                    <input value={forms.inventory.unit} onChange={(event) => updateForm("inventory", { ...forms.inventory, unit: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Seuil d'alerte
+                    <input type="number" value={forms.inventory.lowStockThreshold} onChange={(event) => updateForm("inventory", { ...forms.inventory, lowStockThreshold: event.target.value }, setForms)} />
+                  </label>
+                  <label>
+                    Prix
+                    <input type="number" value={forms.inventory.price} onChange={(event) => updateForm("inventory", { ...forms.inventory, price: event.target.value }, setForms)} />
+                  </label>
+                  <button type="submit">Enregistrer</button>
+                </form>
+
+                <form className="stack compact top-divider" onSubmit={submitPharmacySale}>
+                  <h3>Vendre un produit</h3>
+                  <label>
+                    Produit
+                    <select
+                      value={forms.pharmacySale.productId}
+                      onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, productId: event.target.value }, setForms)}
+                    >
+                      <option value="">Selectionner un produit</option>
+                      {data.inventory.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} - {item.price} FCFA - stock {item.quantity}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Quantite
+                    <input
+                      type="number"
+                      min="1"
+                      value={forms.pharmacySale.quantity}
+                      onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, quantity: event.target.value }, setForms)}
+                    />
+                  </label>
+                  <label>
+                    Client
+                    <select
+                      value={forms.pharmacySale.customerType}
+                      onChange={(event) =>
+                        updateForm(
+                          "pharmacySale",
+                          {
+                            ...forms.pharmacySale,
+                            customerType: event.target.value
+                          },
+                          setForms
+                        )
+                      }
+                    >
+                      <option value="existing">Patiente existante</option>
+                      <option value="new">Nouveau client</option>
+                    </select>
+                  </label>
+                  {forms.pharmacySale.customerType === "existing" ? (
+                    <label>
+                      Patiente
+                      <select
+                        value={forms.pharmacySale.patientId}
+                        onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, patientId: event.target.value }, setForms)}
+                      >
+                        <option value="">Selectionner une patiente</option>
+                        {data.patients.map((patient) => (
+                          <option key={patient.id} value={patient.id}>
+                            {patient.fullName} - {patient.phone || "-"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    <>
+                      <label>
+                        Nom du client
+                        <input
+                          value={forms.pharmacySale.customerName}
+                          onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, customerName: event.target.value }, setForms)}
+                        />
+                      </label>
+                      <label>
+                        Age
+                        <input
+                          value={forms.pharmacySale.customerAge}
+                          onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, customerAge: event.target.value }, setForms)}
+                        />
+                      </label>
+                      <label>
+                        Telephone
+                        <input
+                          value={forms.pharmacySale.customerPhone}
+                          onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, customerPhone: event.target.value }, setForms)}
+                        />
+                      </label>
+                    </>
+                  )}
+                  <p className="hint">
+                    Montant total: {getPharmacySaleTotal(data.inventory, forms.pharmacySale.productId, forms.pharmacySale.quantity)} FCFA
+                  </p>
+                  <button type="submit">Valider la vente et generer le recu</button>
+                </form>
+              </div>
             }
           >
             <InventoryList rows={data.inventory} />
@@ -1583,6 +1703,7 @@ function humanizeAction(action) {
     "create:births": "Enregistrement accouchement",
     "create:inventory": "Ajout produit pharmacie",
     "create:invoices": "Vente / facture",
+    "pharmacy:sale": "Vente pharmacie",
     "create:expenses": "Enregistrement depense",
     "create:users": "Creation utilisateur",
     "update:user": "Modification utilisateur",
@@ -1617,12 +1738,21 @@ function buildLogDetails(row) {
     return `${row.metadata?.amount || 0} FCFA / ${row.metadata?.paymentMethod || "-"}`;
   }
 
+  if (row.action === "pharmacy:sale") {
+    return `${row.metadata?.customerName || "-"} / ${row.metadata?.amount || 0} FCFA`;
+  }
+
   return row.details || "-";
 }
 
 function getSelectedStatusPrice(serviceStatuses, serviceStatusId) {
   const item = serviceStatuses.find((status) => status.id === serviceStatusId);
   return item ? item.price : 0;
+}
+
+function getPharmacySaleTotal(inventory, productId, quantity) {
+  const item = inventory.find((product) => product.id === productId);
+  return item ? Number(item.price || 0) * Number(quantity || 0) : 0;
 }
 
 function downloadReceipt(receipt) {

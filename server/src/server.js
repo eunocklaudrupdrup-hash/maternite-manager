@@ -460,6 +460,112 @@ export function createServerApp(app) {
     });
   });
 
+  app.post("/api/pharmacy/sales", requireRole(["admin", "pharmacist", "accountant", "receptionist"]), (req, res) => {
+    const db = getDb();
+    const product = db.inventory.find(
+      (item) => item.id === req.body?.productId && item.clinicId === req.user.clinicId
+    );
+    const clinic = db.clinics.find((item) => item.id === req.user.clinicId);
+
+    if (!product) {
+      return res.status(404).json({ message: "Produit introuvable." });
+    }
+
+    const quantity = Number(req.body?.quantity || 0);
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ message: "Quantite invalide." });
+    }
+
+    if (Number(product.quantity || 0) < quantity) {
+      return res.status(400).json({ message: "Stock insuffisant pour cette vente." });
+    }
+
+    const customerType = req.body?.customerType === "existing" ? "existing" : "new";
+    let customerName = "";
+    let customerAge = "";
+    let customerPhone = "";
+
+    if (customerType === "existing") {
+      const patient = db.patients.find(
+        (item) => item.id === req.body?.patientId && item.clinicId === req.user.clinicId
+      );
+
+      if (!patient) {
+        return res.status(404).json({ message: "Patiente introuvable." });
+      }
+
+      customerName = patient.fullName;
+      customerAge = patient.age || "";
+      customerPhone = patient.phone || "";
+    } else {
+      customerName = String(req.body?.customerName || "").trim();
+      customerAge = String(req.body?.customerAge || "").trim();
+      customerPhone = String(req.body?.customerPhone || "").trim();
+
+      if (!customerName) {
+        return res.status(400).json({ message: "Le nom du client est obligatoire." });
+      }
+    }
+
+    const unitPrice = Number(product.price || 0);
+    const totalAmount = unitPrice * quantity;
+
+    const updatedProduct = updateEntity("inventory", product.id, req.user.clinicId, {
+      quantity: Number(product.quantity || 0) - quantity
+    });
+
+    const invoice = addEntity("invoices", {
+      clinicId: req.user.clinicId,
+      createdBy: req.user.id,
+      createdByName: req.user.fullName,
+      patientName: customerName,
+      patientAge: customerAge,
+      patientPhone: customerPhone,
+      item: `${product.name} x${quantity}`,
+      amount: totalAmount,
+      status: "Paye",
+      paymentMethod: req.body?.paymentMethod || "Especes",
+      clinicName: clinic?.name || "",
+      clinicLogo: clinic?.logo || "",
+      paidAt: new Date().toISOString(),
+      invoiceType: "pharmacy-sale",
+      productId: product.id,
+      quantity,
+      unitPrice
+    });
+
+    appendLog({
+      clinicId: req.user.clinicId,
+      action: "pharmacy:sale",
+      actorId: req.user.id,
+      actorName: req.user.fullName,
+      entityType: "inventory",
+      entityId: product.id,
+      details: `${product.name} x${quantity}`,
+      metadata: {
+        customerName,
+        amount: totalAmount,
+        quantity
+      }
+    });
+
+    res.status(201).json({
+      product: updatedProduct,
+      invoice,
+      receipt: {
+        clinicName: clinic?.name || "",
+        clinicLogo: clinic?.logo || "",
+        patientName: customerName,
+        patientAge: customerAge,
+        patientPhone: customerPhone,
+        status: `Vente pharmacie - ${product.name} x${quantity}`,
+        amount: totalAmount,
+        paidAt: invoice.paidAt,
+        cashierName: req.user.fullName
+      }
+    });
+  });
+
   app.get("/api/reports/medical", requireRole(["admin", "doctor", "midwife"]), (req, res) => {
     res.json(
       getMedicalReport(req.user.clinicId, {

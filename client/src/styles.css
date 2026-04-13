@@ -306,6 +306,11 @@ td {
   align-items: end;
 }
 
+.top-divider {
+  border-top: 1px solid rgba(20, 49, 38, 0.1);
+  padding-top: 1rem;
+}
+
 .user-card-head,
 .user-actions {
   display: flex;

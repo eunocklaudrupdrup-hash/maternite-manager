@@ -677,6 +677,9 @@ export default function App() {
             <h1>Tableau de bord de la clinique</h1>
           </div>
           <div className="topbar-actions">
+            <button type="button" className="secondary" onClick={loadAll}>
+              Actualiser
+            </button>
             {installPrompt ? (
               <button type="button" className="secondary" onClick={handleInstallApp}>
                 Installer l'application

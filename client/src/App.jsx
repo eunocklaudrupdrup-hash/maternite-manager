@@ -77,6 +77,7 @@ export default function App() {
   const [forms, setForms] = useState(initialForms);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inventoryFilter, setInventoryFilter] = useState("");
   const [reportFilter, setReportFilter] = useState({
     mode: "all",
     date: "",
@@ -445,6 +446,18 @@ export default function App() {
 
   async function submitPharmacySale(event) {
     event.preventDefault();
+    if (!forms.pharmacySale.productId) {
+      setError("Veuillez selectionner un produit a vendre.");
+      return;
+    }
+    if (forms.pharmacySale.customerType === "existing" && !forms.pharmacySale.patientId) {
+      setError("Veuillez selectionner une patiente existante.");
+      return;
+    }
+    if (forms.pharmacySale.customerType === "new" && !forms.pharmacySale.customerName.trim()) {
+      setError("Veuillez renseigner le nom du client.");
+      return;
+    }
     try {
       const response = await apiRequest("/pharmacy/sales", {
         method: "POST",
@@ -455,6 +468,7 @@ export default function App() {
         ...current,
         pharmacySale: initialForms.pharmacySale
       }));
+      setError("");
       await loadAll();
     } catch (submitError) {
       setError(submitError.message);
@@ -1023,7 +1037,17 @@ export default function App() {
               </div>
             }
           >
-            <InventoryList rows={data.inventory} />
+            <div className="stack">
+              <label>
+                Filtrer par nom de produit
+                <input
+                  value={inventoryFilter}
+                  onChange={(event) => setInventoryFilter(event.target.value)}
+                  placeholder="Rechercher un produit..."
+                />
+              </label>
+              <InventoryTable rows={filterInventoryByName(data.inventory, inventoryFilter)} />
+            </div>
           </SectionLayout>
         )}
 
@@ -1330,23 +1354,39 @@ function SimpleTable({ rows, columns }) {
   );
 }
 
-function InventoryList({ rows }) {
+function InventoryTable({ rows }) {
   if (!rows?.length) {
-    return <p className="muted">Aucune donnee disponible.</p>;
+    return <p className="muted">Aucun produit trouve.</p>;
   }
 
   return (
-    <div className="inventory-grid">
-      {rows.map((row) => (
-        <article key={row.id} className="inventory-card">
-          {row.photo ? <img className="product-photo" src={row.photo} alt={row.name} /> : null}
-          <strong>{row.name}</strong>
-          <p className="muted">{row.category}</p>
-          <p>Stock: {row.quantity} {row.unit}</p>
-          <p>Prix: {row.price} FCFA</p>
-          <p>Seuil: {row.lowStockThreshold}</p>
-        </article>
-      ))}
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Photo</th>
+            <th>Nom</th>
+            <th>Categorie</th>
+            <th>Stock</th>
+            <th>Unite</th>
+            <th>Prix</th>
+            <th>Seuil</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.photo ? <img className="table-product-photo" src={row.photo} alt={row.name} /> : "-"}</td>
+              <td>{row.name}</td>
+              <td>{row.category}</td>
+              <td>{row.quantity}</td>
+              <td>{row.unit}</td>
+              <td>{row.price} FCFA</td>
+              <td>{row.lowStockThreshold}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -1784,6 +1824,15 @@ function getSelectedStatusPrice(serviceStatuses, serviceStatusId) {
 function getPharmacySaleTotal(inventory, productId, quantity) {
   const item = inventory.find((product) => product.id === productId);
   return item ? Number(item.price || 0) * Number(quantity || 0) : 0;
+}
+
+function filterInventoryByName(rows, search) {
+  const query = String(search || "").trim().toLowerCase();
+  if (!query) {
+    return rows;
+  }
+
+  return rows.filter((row) => String(row.name || "").toLowerCase().includes(query));
 }
 
 function downloadReceipt(receipt) {

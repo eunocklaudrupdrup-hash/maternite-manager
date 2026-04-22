@@ -1,0 +1,95 @@
+:root {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: #142332;
+  background:
+    radial-gradient(circle at top right, rgba(255, 180, 107, 0.35), transparent 30%),
+    linear-gradient(160deg, #fff7ef 0%, #f5f1ea 48%, #eef4fb 100%);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; }
+button, input, select { font: inherit; }
+button {
+  border: none;
+  border-radius: 18px;
+  padding: .95rem 1.1rem;
+  background: linear-gradient(135deg, #f08337, #d55a1f);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+input, select {
+  width: 100%;
+  margin-top: .45rem;
+  border-radius: 14px;
+  border: 1px solid rgba(20, 35, 50, .12);
+  padding: .9rem 1rem;
+  background: rgba(255,255,255,.86);
+}
+input[type="checkbox"] { width: auto; margin: 0; }
+label { display: block; font-weight: 700; }
+
+.auth-shell, .app-shell { min-height: 100vh; padding: 1rem; }
+.auth-shell { display: grid; place-items: center; }
+.card {
+  background: rgba(255,255,255,.82);
+  border: 1px solid rgba(20,35,50,.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 40px rgba(20,35,50,.08);
+  border-radius: 26px;
+  padding: 1.2rem;
+}
+.auth-card { width: min(540px, 100%); }
+.topbar, .topbar-actions, .switch-row, .grid, .stack, .filter-grid, .country-grid {
+  display: grid;
+  gap: 1rem;
+}
+.topbar { grid-template-columns: 1fr auto; align-items: start; }
+.topbar-actions { grid-auto-flow: column; align-items: center; }
+.grid.metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 1rem 0; }
+.grid.two { grid-template-columns: 1fr 1fr; margin-bottom: 1rem; }
+.stack { gap: .9rem; }
+.switch-row { grid-auto-flow: column; justify-content: start; }
+.chip { background: rgba(20,35,50,.08); color: #142332; }
+.chip.active { background: #142332; color: #fff; }
+.hero { margin-bottom: 1rem; }
+.pill, .notice, .demo-box {
+  border-radius: 18px;
+  padding: .85rem 1rem;
+}
+.pill { background: rgba(20,35,50,.08); font-weight: 700; }
+.notice { background: rgba(20,35,50,.06); margin: 1rem 0; }
+.demo-box { background: rgba(240,131,55,.14); margin-top: 1rem; }
+.country-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.country-card, .country-editor, .deposit-card {
+  text-align: left;
+  display: grid;
+  gap: .45rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(20,35,50,.05);
+}
+.toggle { display: flex; align-items: center; gap: .6rem; }
+.metric span { color: #5f7180; display: block; }
+.metric strong { display: block; margin-top: .45rem; font-size: 1.5rem; }
+.table-wrap { overflow: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  text-align: left;
+  padding: .75rem .35rem;
+  border-bottom: 1px solid rgba(20,35,50,.08);
+  font-size: .95rem;
+}
+.eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .76rem; color: #5f7180; }
+.muted { color: #5f7180; }
+.success { color: #1d7a35; }
+.error { color: #b1261d; }
+.top-space { margin-top: 1rem; }
+.loading { padding: 2rem; text-align: center; }
+
+@media (max-width: 900px) {
+  .topbar, .grid.metrics, .grid.two, .topbar-actions {
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+  }
+}

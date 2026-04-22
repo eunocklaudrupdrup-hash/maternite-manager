@@ -141,49 +141,66 @@ export default function App() {
     setLoading(true);
     setError("");
     try {
-      const requests = [
-        apiRequest("/dashboard"),
-        apiRequest("/clinic"),
-        apiRequest("/serviceStatuses"),
-        apiRequest("/patients"),
-        apiRequest("/appointments"),
-        apiRequest("/births"),
-        apiRequest("/inventory"),
-        apiRequest("/invoices"),
-        apiRequest("/expenses"),
-        apiRequest("/staff")
-      ];
-
-      if (session.role === "admin") {
-        requests.push(apiRequest("/users"));
-        requests.push(apiRequest("/admin/logs"));
-        requests.push(apiRequest("/admin/sales"));
-      }
-
-      const [
-        dashboard,
-        clinic,
-        serviceStatuses,
-        patients,
-        appointments,
-        births,
-        inventory,
-        invoices,
-        expenses,
-        staff,
-        users = [],
-        logs = [],
-        sales = []
-      ] =
-        await Promise.all(requests);
+      const dashboard = await safeRequest("/dashboard", null);
+      const clinic = await safeRequest("/clinic", null);
+      const serviceStatuses = await safeRequest(
+        "/serviceStatuses",
+        [],
+        canAccessSection(session, "serviceStatuses") ||
+          canAccessSection(session, "patients")
+      );
+      const patients = await safeRequest(
+        "/patients",
+        [],
+        canAccessSection(session, "patients") ||
+          canAccessSection(session, "finance") ||
+          canAccessSection(session, "inventory")
+      );
+      const appointments = await safeRequest(
+        "/appointments",
+        [],
+        canAccessSection(session, "appointments")
+      );
+      const births = await safeRequest(
+        "/births",
+        [],
+        canAccessSection(session, "births") ||
+          canAccessSection(session, "reports")
+      );
+      const inventory = await safeRequest(
+        "/inventory",
+        [],
+        canAccessSection(session, "inventory")
+      );
+      const invoices = await safeRequest(
+        "/invoices",
+        [],
+        canAccessSection(session, "finance") ||
+          canAccessSection(session, "invoices")
+      );
+      const expenses = await safeRequest(
+        "/expenses",
+        [],
+        canAccessSection(session, "finance")
+      );
+      const staff = await safeRequest(
+        "/staff",
+        [],
+        canAccessSection(session, "staff")
+      );
+      const users = await safeRequest("/users", [], session.role === "admin");
+      const logs = await safeRequest("/admin/logs", [], session.role === "admin");
+      const sales = await safeRequest("/admin/sales", [], session.role === "admin");
 
       let reports = null;
       try {
-        const query = buildReportQuery(reportFilter);
-        reports = {
-          medical: await apiRequest(`/reports/medical${query}`),
-          financial: await apiRequest(`/reports/financial${query}`)
-        };
+        if (canAccessSection(session, "reports")) {
+          const query = buildReportQuery(reportFilter);
+          reports = {
+            medical: await safeRequest(`/reports/medical${query}`, null, true),
+            financial: await safeRequest(`/reports/financial${query}`, null, true)
+          };
+        }
       } catch {
         reports = null;
       }
@@ -201,6 +218,21 @@ export default function App() {
       setError(loadError.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function safeRequest(path, fallbackValue, shouldFetch = true) {
+    if (!shouldFetch) {
+      return fallbackValue;
+    }
+
+    try {
+      return await apiRequest(path);
+    } catch (requestError) {
+      if (requestError.message === "Acces refuse pour ce role.") {
+        return fallbackValue;
+      }
+      throw requestError;
     }
   }
 

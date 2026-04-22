@@ -1,0 +1,17 @@
+{
+  "name": "NumRapidePro",
+  "short_name": "NumRapidePro",
+  "description": "PWA mobile de demonstration pour OTP, wallet et achat de numeros par pays.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff7ef",
+  "theme_color": "#d55a1f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

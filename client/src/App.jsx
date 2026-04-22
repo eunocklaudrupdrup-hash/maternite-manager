@@ -77,6 +77,7 @@ export default function App() {
   const [forms, setForms] = useState(initialForms);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
   const [inventoryFilter, setInventoryFilter] = useState("");
   const [reportFilter, setReportFilter] = useState({
     mode: "all",
@@ -321,6 +322,7 @@ export default function App() {
         ...current,
         users: initialForms.users
       }));
+      setShowUserModal(false);
       await loadAll();
       window.alert(`Utilisateur cree. Mot de passe temporaire: ${response.temporaryPassword}`);
     } catch (submitError) {
@@ -1143,9 +1145,16 @@ export default function App() {
         )}
 
         {activeSection === "users" && (
-          <section className="grid two-columns">
+          <section className="stack">
             <article className="panel">
-              <h3>Gestion des utilisateurs</h3>
+              <div className="section-header">
+                <h3>Gestion des utilisateurs</h3>
+                {session.role === "admin" ? (
+                  <button type="button" onClick={() => setShowUserModal(true)}>
+                    Creer un utilisateur
+                  </button>
+                ) : null}
+              </div>
               {session.role !== "admin" ? (
                 <p className="muted">Acces reserve a l'administrateur.</p>
               ) : (
@@ -1156,46 +1165,6 @@ export default function App() {
                   onSave={savePermissions}
                   onUpdate={updateUser}
                 />
-              )}
-            </article>
-            <article className="panel">
-              <h3>Creer un utilisateur</h3>
-              {session.role !== "admin" ? (
-                <p className="muted">Seul l'administrateur peut creer des comptes.</p>
-              ) : (
-                <form
-                  className="stack compact"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    createUser();
-                  }}
-                >
-                  <label>
-                    Nom complet
-                    <input value={forms.users.fullName} onChange={(event) => updateForm("users", { ...forms.users, fullName: event.target.value }, setForms)} />
-                  </label>
-                  <label>
-                    Email
-                    <input type="email" value={forms.users.email} onChange={(event) => updateForm("users", { ...forms.users, email: event.target.value }, setForms)} />
-                  </label>
-                  <label>
-                    Role
-                    <input value={forms.users.role} onChange={(event) => updateForm("users", { ...forms.users, role: event.target.value }, setForms)} />
-                  </label>
-                  <label>
-                    Mot de passe initial
-                    <input value={forms.users.password} onChange={(event) => updateForm("users", { ...forms.users, password: event.target.value }, setForms)} />
-                  </label>
-                  <PermissionSelector
-                    selected={forms.users.permissions}
-                    onChange={(permissions) => updateForm("users", { ...forms.users, permissions }, setForms)}
-                  />
-                  <label className="checkbox-row">
-                    <input type="checkbox" checked={forms.users.isActive} onChange={(event) => updateForm("users", { ...forms.users, isActive: event.target.checked }, setForms)} />
-                    Compte actif
-                  </label>
-                  <button type="submit">Creer le compte</button>
-                </form>
               )}
             </article>
           </section>
@@ -1323,6 +1292,52 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {showUserModal ? (
+        <div className="modal-backdrop" onClick={() => setShowUserModal(false)}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="section-header">
+              <h3>Creer un utilisateur</h3>
+              <button type="button" className="secondary" onClick={() => setShowUserModal(false)}>
+                Fermer
+              </button>
+            </div>
+            <form
+              className="stack compact"
+              onSubmit={(event) => {
+                event.preventDefault();
+                createUser();
+              }}
+            >
+              <label>
+                Nom complet
+                <input value={forms.users.fullName} onChange={(event) => updateForm("users", { ...forms.users, fullName: event.target.value }, setForms)} />
+              </label>
+              <label>
+                Email
+                <input type="email" value={forms.users.email} onChange={(event) => updateForm("users", { ...forms.users, email: event.target.value }, setForms)} />
+              </label>
+              <label>
+                Role
+                <input value={forms.users.role} onChange={(event) => updateForm("users", { ...forms.users, role: event.target.value }, setForms)} />
+              </label>
+              <label>
+                Mot de passe initial
+                <input value={forms.users.password} onChange={(event) => updateForm("users", { ...forms.users, password: event.target.value }, setForms)} />
+              </label>
+              <PermissionSelector
+                selected={forms.users.permissions}
+                onChange={(permissions) => updateForm("users", { ...forms.users, permissions }, setForms)}
+              />
+              <label className="checkbox-row">
+                <input type="checkbox" checked={forms.users.isActive} onChange={(event) => updateForm("users", { ...forms.users, isActive: event.target.checked }, setForms)} />
+                Compte actif
+              </label>
+              <button type="submit">Creer le compte</button>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

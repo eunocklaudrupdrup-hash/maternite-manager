@@ -176,6 +176,14 @@ label {
   flex-wrap: wrap;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .grid {
   display: grid;
   gap: 1rem;
@@ -381,6 +389,27 @@ td {
 .top-divider {
   border-top: 1px solid rgba(20, 49, 38, 0.1);
   padding-top: 1rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 49, 38, 0.35);
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  z-index: 1000;
+}
+
+.modal-card {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: rgba(255, 252, 247, 0.98);
+  border: 1px solid rgba(20, 49, 38, 0.08);
+  border-radius: 24px;
+  padding: 1.25rem;
+  box-shadow: 0 24px 60px rgba(20, 49, 38, 0.22);
 }
 
 .user-card-head,

@@ -308,6 +308,14 @@ td {
   gap: 0.75rem;
 }
 
+.compact-permissions {
+  padding: 0.75rem;
+}
+
+.compact-permissions .permission-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
 .user-card {
   border: 1px solid rgba(20, 49, 38, 0.09);
   border-radius: 18px;
@@ -381,6 +389,12 @@ td {
 .user-actions {
   margin-top: 1rem;
   flex-wrap: wrap;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .status-active,

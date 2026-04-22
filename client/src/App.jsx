@@ -1149,18 +1149,13 @@ export default function App() {
               {session.role !== "admin" ? (
                 <p className="muted">Acces reserve a l'administrateur.</p>
               ) : (
-                <div className="stack">
-                  {data.users.map((user) => (
-                    <UserCard
-                      key={user.id}
-                      user={user}
-                      onToggle={() => toggleUserActivation(user)}
-                      onResetPassword={() => resetPassword(user)}
-                      onSave={savePermissions}
-                      onUpdate={updateUser}
-                    />
-                  ))}
-                </div>
+                <UsersTable
+                  rows={data.users}
+                  onToggle={toggleUserActivation}
+                  onResetPassword={resetPassword}
+                  onSave={savePermissions}
+                  onUpdate={updateUser}
+                />
               )}
             </article>
             <article className="panel">
@@ -1372,14 +1367,27 @@ function ResourceForm({ fields, value, onChange, onSubmit }) {
 }
 
 function SimpleTable({ rows, columns }) {
+  const [query, setQuery] = useState("");
+
   if (!rows?.length) {
     return <p className="muted">Aucune donnee disponible.</p>;
   }
+
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => columns.map((column) => String(row[column] ?? "")).join(" ")
+  );
 
   return (
     <div className="table-wrapper">
       <table>
         <thead>
+          <tr>
+            <th colSpan={columns.length}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
           <tr>
             {columns.map((column) => (
               <th key={column}>{column}</th>
@@ -1387,7 +1395,7 @@ function SimpleTable({ rows, columns }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {filteredRows.map((row) => (
             <tr key={row.id}>
               {columns.map((column) => (
                 <td key={column}>{String(row[column] ?? "-")}</td>
@@ -1401,14 +1409,27 @@ function SimpleTable({ rows, columns }) {
 }
 
 function InventoryTable({ rows }) {
+  const [query, setQuery] = useState("");
+
   if (!rows?.length) {
     return <p className="muted">Aucun produit trouve.</p>;
   }
+
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => `${row.name} ${row.category} ${row.unit}`
+  );
 
   return (
     <div className="table-wrapper">
       <table>
         <thead>
+          <tr>
+            <th colSpan={7}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
           <tr>
             <th>Photo</th>
             <th>Nom</th>
@@ -1420,7 +1441,7 @@ function InventoryTable({ rows }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {filteredRows.map((row) => (
             <tr key={row.id}>
               <td>{row.photo ? <img className="table-product-photo" src={row.photo} alt={row.name} /> : "-"}</td>
               <td>{row.name}</td>
@@ -1438,38 +1459,64 @@ function InventoryTable({ rows }) {
 }
 
 function PatientList({ rows, serviceStatuses, onAssignStatus }) {
+  const [query, setQuery] = useState("");
+
   if (!rows?.length) {
     return <p className="muted">Aucune donnee disponible.</p>;
   }
 
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => `${row.fullName} ${row.phone} ${row.serviceStatusLabel || row.status} ${row.paymentStatus}`
+  );
+
   return (
-    <div className="stack">
-      {rows.map((row) => (
-        <PatientCard key={row.id} patient={row} serviceStatuses={serviceStatuses} onAssignStatus={onAssignStatus} />
-      ))}
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th colSpan={8}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
+          <tr>
+            <th>Nom</th>
+            <th>Telephone</th>
+            <th>Statut actif</th>
+            <th>Prix</th>
+            <th>Paiement</th>
+            <th>Grossesse</th>
+            <th>Nouveau statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredRows.map((row) => (
+            <PatientRow key={row.id} patient={row} serviceStatuses={serviceStatuses} onAssignStatus={onAssignStatus} />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function PatientCard({ patient, serviceStatuses, onAssignStatus }) {
+function PatientRow({ patient, serviceStatuses, onAssignStatus }) {
   const [nextStatusId, setNextStatusId] = useState("");
 
   return (
-    <article className="user-card">
-      <div className="user-card-head">
-        <div>
-          <strong>{patient.fullName}</strong>
-          <p className="muted">{patient.phone || "-"}</p>
-        </div>
+    <tr>
+      <td>{patient.fullName}</td>
+      <td>{patient.phone || "-"}</td>
+      <td>{patient.serviceStatusLabel || patient.status || "-"}</td>
+      <td>{patient.servicePrice || 0} FCFA</td>
+      <td>
         <span className={patient.paymentStatus === "Paiement effectue a la caisse" ? "status-active" : "status-inactive"}>
           {patient.paymentStatus || "En attente"}
         </span>
-      </div>
-      <p><strong>Statut actif :</strong> {patient.serviceStatusLabel || patient.status || "-"}</p>
-      <p><strong>Prix :</strong> {patient.servicePrice || 0} FCFA</p>
-      <p><strong>Grossesse :</strong> {patient.pregnancyWeeks || "-"} semaines</p>
-      <label>
-        Continuer avec un autre statut
+      </td>
+      <td>{patient.pregnancyWeeks || "-"} semaines</td>
+      <td>
         <select value={nextStatusId} onChange={(event) => setNextStatusId(event.target.value)}>
           <option value="">Selectionner un statut</option>
           {serviceStatuses.map((item) => (
@@ -1478,31 +1525,51 @@ function PatientCard({ patient, serviceStatuses, onAssignStatus }) {
             </option>
           ))}
         </select>
-      </label>
-      <div className="user-actions">
+      </td>
+      <td>
         <button type="button" onClick={() => onAssignStatus(patient.id, nextStatusId)}>
           Affecter le statut
         </button>
-      </div>
-    </article>
+      </td>
+    </tr>
   );
 }
 
 function ServiceStatusList({ rows, onSave }) {
+  const [query, setQuery] = useState("");
+
   if (!rows?.length) {
     return <p className="muted">Aucun statut configure.</p>;
   }
 
+  const filteredRows = filterTableRows(rows, query, (row) => `${row.label} ${row.price}`);
+
   return (
-    <div className="stack">
-      {rows.map((row) => (
-        <ServiceStatusCard key={row.id} item={row} onSave={onSave} />
-      ))}
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th colSpan={3}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
+          <tr>
+            <th>Libelle</th>
+            <th>Prix</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredRows.map((row) => (
+            <ServiceStatusRow key={row.id} item={row} onSave={onSave} />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function ServiceStatusCard({ item, onSave }) {
+function ServiceStatusRow({ item, onSave }) {
   const [label, setLabel] = useState(item.label);
   const [price, setPrice] = useState(item.price);
 
@@ -1512,101 +1579,161 @@ function ServiceStatusCard({ item, onSave }) {
   }, [item]);
 
   return (
-    <article className="user-card">
-      <label>
-        Libelle
+    <tr>
+      <td>
         <input value={label} onChange={(event) => setLabel(event.target.value)} />
-      </label>
-      <label>
-        Prix
+      </td>
+      <td>
         <input type="number" value={price} onChange={(event) => setPrice(event.target.value)} />
-      </label>
-      <div className="user-actions">
+      </td>
+      <td>
         <button type="button" onClick={() => onSave(item.id, { label, price })}>
           Enregistrer
         </button>
-      </div>
-    </article>
+      </td>
+    </tr>
   );
 }
 
 function PendingPaymentsList({ rows, onPay }) {
+  const [query, setQuery] = useState("");
+
   if (!rows?.length) {
     return <p className="muted">Aucune patiente en attente de paiement.</p>;
   }
 
-  return (
-    <div className="stack">
-      {rows.map((row) => (
-        <article key={row.id} className="user-card">
-          <strong>{row.fullName}</strong>
-          <p className="muted">{row.serviceStatusLabel || "-"}</p>
-          <p>Montant a payer: {row.servicePrice || 0} FCFA</p>
-          <p>Etat: {row.paymentStatus || "En attente"}</p>
-          <div className="user-actions">
-            <button type="button" onClick={() => onPay(row.id)}>
-              Valider le paiement a la caisse
-            </button>
-          </div>
-        </article>
-      ))}
-    </div>
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => `${row.fullName} ${row.serviceStatusLabel} ${row.paymentStatus}`
   );
-}
-
-function InvoicesList({ rows }) {
-  if (!rows?.length) {
-    return <p className="muted">Aucune donnee disponible.</p>;
-  }
-
-  return (
-    <div className="stack">
-      {rows.map((row) => (
-        <article key={row.id} className="user-card">
-          <div className="user-card-head">
-            <div>
-              <strong>{row.patientName || "-"}</strong>
-              <p className="muted">{row.item || "-"}</p>
-            </div>
-            <span className="status-active">{row.status || "-"}</span>
-          </div>
-          <p>Montant: {row.amount || 0} FCFA</p>
-          <p>Mode de paiement: {row.paymentMethod || "-"}</p>
-          <div className="user-actions">
-            <button
-              type="button"
-              onClick={() =>
-                downloadReceipt({
-                  clinicName: row.clinicName || "",
-                  clinicLogo: row.clinicLogo || "",
-                  patientName: row.patientName || "",
-                  patientAge: row.patientAge || "",
-                  patientPhone: row.patientPhone || "",
-                  status: row.item || "",
-                  amount: row.amount || 0,
-                  paidAt: row.paidAt || row.createdAt,
-                  cashierName: row.createdByName || ""
-                })
-              }
-            >
-              Telecharger le recu
-            </button>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function AuditTable({ rows }) {
-  if (!rows?.length) {
-    return <p className="muted">Aucune activite enregistree.</p>;
-  }
 
   return (
     <div className="table-wrapper">
       <table>
         <thead>
+          <tr>
+            <th colSpan={5}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
+          <tr>
+            <th>Patiente</th>
+            <th>Statut</th>
+            <th>Montant</th>
+            <th>Etat</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredRows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.fullName}</td>
+              <td>{row.serviceStatusLabel || "-"}</td>
+              <td>{row.servicePrice || 0} FCFA</td>
+              <td>{row.paymentStatus || "En attente"}</td>
+              <td>
+                <button type="button" onClick={() => onPay(row.id)}>
+                  Valider le paiement a la caisse
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function InvoicesList({ rows }) {
+  const [query, setQuery] = useState("");
+
+  if (!rows?.length) {
+    return <p className="muted">Aucune donnee disponible.</p>;
+  }
+
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => `${row.patientName} ${row.item} ${row.amount} ${row.paymentMethod}`
+  );
+
+  return (
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th colSpan={6}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
+          <tr>
+            <th>Patiente / Client</th>
+            <th>Article</th>
+            <th>Montant</th>
+            <th>Statut</th>
+            <th>Paiement</th>
+            <th>Recu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredRows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.patientName || "-"}</td>
+              <td>{row.item || "-"}</td>
+              <td>{row.amount || 0} FCFA</td>
+              <td>{row.status || "-"}</td>
+              <td>{row.paymentMethod || "-"}</td>
+              <td>
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadReceipt({
+                      clinicName: row.clinicName || "",
+                      clinicLogo: row.clinicLogo || "",
+                      patientName: row.patientName || "",
+                      patientAge: row.patientAge || "",
+                      patientPhone: row.patientPhone || "",
+                      status: row.item || "",
+                      amount: row.amount || 0,
+                      paidAt: row.paidAt || row.createdAt,
+                      cashierName: row.createdByName || ""
+                    })
+                  }
+                >
+                  Telecharger le recu
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AuditTable({ rows }) {
+  const [query, setQuery] = useState("");
+
+  if (!rows?.length) {
+    return <p className="muted">Aucune activite enregistree.</p>;
+  }
+
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => `${row.actorName} ${row.action} ${row.details} ${buildLogDetails(row)}`
+  );
+
+  return (
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th colSpan={5}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
           <tr>
             <th>Utilisateur</th>
             <th>Action</th>
@@ -1616,7 +1743,7 @@ function AuditTable({ rows }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
+          {filteredRows.map((row) => {
             const { date, time } = formatLogDate(row.createdAt);
             return (
               <tr key={row.id}>
@@ -1635,14 +1762,27 @@ function AuditTable({ rows }) {
 }
 
 function SalesTable({ rows }) {
+  const [query, setQuery] = useState("");
+
   if (!rows?.length) {
     return <p className="muted">Aucune vente enregistree.</p>;
   }
+
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => `${row.actorName} ${row.metadata?.patientName || ""} ${row.metadata?.item || ""} ${row.metadata?.amount || ""}`
+  );
 
   return (
     <div className="table-wrapper">
       <table>
         <thead>
+          <tr>
+            <th colSpan={6}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
           <tr>
             <th>Vendeur</th>
             <th>Patiente</th>
@@ -1653,7 +1793,7 @@ function SalesTable({ rows }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
+          {filteredRows.map((row) => {
             const { date, time } = formatLogDate(row.createdAt);
             return (
               <tr key={row.id}>
@@ -1666,6 +1806,54 @@ function SalesTable({ rows }) {
               </tr>
             );
           })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function UsersTable({ rows, onToggle, onResetPassword, onSave, onUpdate }) {
+  const [query, setQuery] = useState("");
+
+  if (!rows?.length) {
+    return <p className="muted">Aucun utilisateur disponible.</p>;
+  }
+
+  const filteredRows = filterTableRows(
+    rows,
+    query,
+    (row) => `${row.fullName} ${row.email} ${row.role} ${(row.permissions || []).join(" ")}`
+  );
+
+  return (
+    <div className="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th colSpan={6}>
+              <TableFilterInput value={query} onChange={setQuery} />
+            </th>
+          </tr>
+          <tr>
+            <th>Etat</th>
+            <th>Nom complet</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Permissions</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredRows.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onToggle={() => onToggle(user)}
+              onResetPassword={() => onResetPassword(user)}
+              onSave={onSave}
+              onUpdate={onUpdate}
+            />
+          ))}
         </tbody>
       </table>
     </div>
@@ -1686,54 +1874,47 @@ function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
   }, [user]);
 
   return (
-    <article className="user-card">
-      <div className="user-card-head">
-        <div>
-          <strong>{user.fullName}</strong>
-          <p className="muted">{user.email}</p>
-        </div>
-        <span className={user.isActive ? "status-active" : "status-inactive"}>
-          {user.isActive ? "Actif" : "Inactif"}
-        </span>
-      </div>
-      <label>
-        Nom complet
+    <tr>
+      <td>{user.isActive ? "Actif" : "Inactif"}</td>
+      <td>
         <input value={fullName} onChange={(event) => setFullName(event.target.value)} />
-      </label>
-      <label>
-        Email
+      </td>
+      <td>
         <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-      </label>
-      <label>
-        Role
+      </td>
+      <td>
         <input value={role} onChange={(event) => setRole(event.target.value)} />
-      </label>
-      <PermissionSelector selected={permissions} onChange={setPermissions} />
-      <div className="user-actions">
-        <button
-          type="button"
-          onClick={() => onUpdate(user.id, { fullName, email, role })}
-        >
-          Modifier profil
-        </button>
-        <button type="button" onClick={() => onSave(user, permissions, role)}>
-          Enregistrer les droits
-        </button>
-        <button type="button" className="secondary" onClick={onToggle}>
-          {user.isActive ? "Desactiver" : "Activer"}
-        </button>
-        <button type="button" className="secondary" onClick={onResetPassword}>
-          Reinitialiser mot de passe
-        </button>
-      </div>
-    </article>
+      </td>
+      <td>
+        <PermissionSelector selected={permissions} onChange={setPermissions} compact />
+      </td>
+      <td>
+        <div className="table-actions">
+          <button
+            type="button"
+            onClick={() => onUpdate(user.id, { fullName, email, role })}
+          >
+            Modifier profil
+          </button>
+          <button type="button" onClick={() => onSave(user, permissions, role)}>
+            Enregistrer les droits
+          </button>
+          <button type="button" className="secondary" onClick={onToggle}>
+            {user.isActive ? "Desactiver" : "Activer"}
+          </button>
+          <button type="button" className="secondary" onClick={onResetPassword}>
+            Reinitialiser mot de passe
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 }
 
-function PermissionSelector({ selected, onChange }) {
+function PermissionSelector({ selected, onChange, compact = false }) {
   return (
-    <fieldset className="permission-box">
-      <legend>Permissions</legend>
+    <fieldset className={compact ? "permission-box compact-permissions" : "permission-box"}>
+      {compact ? null : <legend>Permissions</legend>}
       <div className="permission-grid">
         {availablePermissions.map((permission) => (
           <label key={permission.key} className="checkbox-row">
@@ -1753,6 +1934,17 @@ function PermissionSelector({ selected, onChange }) {
         ))}
       </div>
     </fieldset>
+  );
+}
+
+function TableFilterInput({ value, onChange }) {
+  return (
+    <input
+      className="table-filter-input"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder="Filtrer automatiquement dans ce tableau..."
+    />
   );
 }
 
@@ -1798,6 +1990,17 @@ function buildReportQuery(filter) {
   }
 
   return `?${params.toString()}`;
+}
+
+function filterTableRows(rows, query, getSearchText) {
+  const normalizedQuery = String(query || "").trim().toLowerCase();
+  if (!normalizedQuery) {
+    return rows;
+  }
+
+  return rows.filter((row) =>
+    String(getSearchText(row) || "").toLowerCase().includes(normalizedQuery)
+  );
 }
 
 function formatLogDate(value) {

@@ -366,6 +366,11 @@ td {
   background: rgba(255, 255, 255, 0.85);
 }
 
+.table-filter-input {
+  margin: 0;
+  background: rgba(246, 252, 248, 0.95);
+}
+
 .report-filter {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

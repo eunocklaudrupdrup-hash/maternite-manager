@@ -93,6 +93,7 @@ export default function App() {
     logo: ""
   });
   const [clinicSignup, setClinicSignup] = useState({
+    creationCode: "",
     clinic: {
       name: "",
       address: "",
@@ -267,6 +268,7 @@ export default function App() {
       const response = await apiRequest("/onboarding/clinic", {
         method: "POST",
         body: JSON.stringify({
+          creationCode: clinicSignup.creationCode,
           clinic: clinicSignup.clinic,
           admins: cleanedAdmins
         })
@@ -552,6 +554,18 @@ export default function App() {
           ) : (
             <form className="stack" onSubmit={handleClinicSignup}>
               <h3>Nouvelle clinique d&apos;accouchement</h3>
+              <label>
+                Code identique
+                <input
+                  type="password"
+                  value={clinicSignup.creationCode}
+                  onChange={(event) => setClinicSignup({
+                    ...clinicSignup,
+                    creationCode: event.target.value
+                  })}
+                  required
+                />
+              </label>
               <label>
                 Nom de la clinique
                 <input

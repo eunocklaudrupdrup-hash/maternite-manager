@@ -19,6 +19,7 @@ import { createToken, getUserFromAuthHeader, requireRole } from "./utils/auth.js
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientDistPath = path.resolve(__dirname, "../../client/dist");
+const CLINIC_CREATION_CODE = "BOOMASSAA";
 
 export function createServerApp(app) {
   app.get("/api/health", (_req, res) => {
@@ -76,6 +77,11 @@ export function createServerApp(app) {
     const payload = req.body ?? {};
     const clinic = payload.clinic ?? {};
     const admins = Array.isArray(payload.admins) ? payload.admins : [];
+    const creationCode = String(payload.creationCode || "").trim();
+
+    if (creationCode !== CLINIC_CREATION_CODE) {
+      return res.status(403).json({ message: "Code identique invalide." });
+    }
 
     if (!clinic.name?.trim()) {
       return res.status(400).json({ message: "Le nom de la clinique est obligatoire." });

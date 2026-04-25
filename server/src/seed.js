@@ -4,7 +4,7 @@ export function createSeedData() {
     clinics: [
       {
         id: clinicId,
-        name: "Clinique Maternite Espoir",
+        name: "Clinique Maternité Espoir",
         address: "12 Avenue de la Sante, Cotonou",
         phone: "+229 01020304",
         email: "contact@espoir.demo",
@@ -40,7 +40,7 @@ export function createSeedData() {
       {
         id: "dep_srv_001",
         clinicId,
-        name: "Consultation generale",
+        name: "Consultation générale",
         head: "Dr. Mireille Akakpo",
         location: "Batiment A",
         phone: "+229 90000010",
@@ -50,7 +50,7 @@ export function createSeedData() {
       {
         id: "dep_srv_002",
         clinicId,
-        name: "Maternite",
+        name: "Maternité",
         head: "Soeur Clarisse",
         location: "Batiment B",
         phone: "+229 90000011",
@@ -82,11 +82,11 @@ export function createSeedData() {
         phone: "+229 97000001",
         address: "Abomey-Calavi",
         pregnancyWeeks: 34,
-        status: "Suivi prenatal",
+        status: "Suivi prénatal",
         serviceStatusId: "svc_002",
-        serviceStatusLabel: "Suivi Prenatal",
+        serviceStatusLabel: "Suivi prénatal",
         servicePrice: 15000,
-        paymentStatus: "Paiement effectue a la caisse",
+        paymentStatus: "Paiement effectué à la caisse",
         history: "G2P1, sans complication majeure",
         createdAt: "2026-04-05T09:00:00.000Z",
         updatedAt: "2026-04-05T09:00:00.000Z"
@@ -104,7 +104,7 @@ export function createSeedData() {
       {
         id: "svc_002",
         clinicId,
-        label: "Suivi Prenatal",
+        label: "Suivi prénatal",
         price: 15000,
         createdAt: "2026-04-01T08:00:00.000Z",
         updatedAt: "2026-04-01T08:00:00.000Z"
@@ -137,7 +137,7 @@ export function createSeedData() {
         id: "con_001",
         clinicId,
         patientName: "Nadia Hounkpe",
-        department: "Consultation generale",
+        department: "Consultation générale",
         doctorName: "Dr. Mireille Akakpo",
         complaint: "Douleurs pelviennes",
         diagnosis: "Surveillance clinique",
@@ -151,7 +151,7 @@ export function createSeedData() {
         id: "urg_001",
         clinicId,
         patientName: "Kossi Dossou",
-        severity: "Moderee",
+        severity: "Modérée",
         arrivalDate: "2026-04-13",
         arrivalTime: "18:10",
         notes: "Douleur abdominale aigue",
@@ -193,7 +193,7 @@ export function createSeedData() {
         id: "sur_001",
         clinicId,
         patientName: "Afi Mensah",
-        procedureName: "Cesarianne programmee",
+        procedureName: "Césarienne programmée",
         surgeon: "Dr. Kodjo Mensah",
         anesthetist: "Dr. Akossiwa",
         surgeryDate: "2026-04-15",
@@ -229,7 +229,7 @@ export function createSeedData() {
         examType: "NFS",
         requestedBy: "Dr. Mireille Akakpo",
         result: "Hb 11.2 g/dL",
-        status: "Valide",
+        status: "Validé",
         createdAt: "2026-04-10T08:00:00.000Z",
         updatedAt: "2026-04-10T08:00:00.000Z"
       }
@@ -242,7 +242,7 @@ export function createSeedData() {
         imagingType: "Echographie obstetricale",
         requestedBy: "Dr. Mireille Akakpo",
         report: "Foetus unique evolutif",
-        status: "Realise",
+        status: "Réalisé",
         createdAt: "2026-04-11T08:00:00.000Z",
         updatedAt: "2026-04-11T08:00:00.000Z"
       }
@@ -279,7 +279,7 @@ export function createSeedData() {
       {
         id: "ins_001",
         clinicId,
-        name: "Mutuelle Sante Plus",
+        name: "Mutuelle Santé Plus",
         coverageRate: 80,
         phone: "+229 91000010",
         email: "contact@mutuelle.demo",
@@ -292,7 +292,7 @@ export function createSeedData() {
         id: "cla_001",
         clinicId,
         patientName: "Nadia Hounkpe",
-        providerName: "Mutuelle Sante Plus",
+        providerName: "Mutuelle Santé Plus",
         claimAmount: 12000,
         coveredAmount: 9600,
         status: "En attente",

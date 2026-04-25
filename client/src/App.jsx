@@ -24,7 +24,7 @@ const sections = [
   { key: "documents", label: "Documents" },
   { key: "staff", label: "Personnel" },
   { key: "users", label: "Utilisateurs" },
-  { key: "activity", label: "Activite" },
+  { key: "activity", label: "Activité" },
   { key: "reports", label: "Rapports" }
 ];
 
@@ -49,10 +49,10 @@ const initialForms = {
     customerName: "",
     customerAge: "",
     customerPhone: "",
-    paymentMethod: "Especes"
+    paymentMethod: "Espèces"
   },
-  invoices: { patientName: "", item: "", amount: "", status: "Paye", paymentMethod: "Especes" },
-  expenses: { label: "", amount: "", category: "General" },
+  invoices: { patientName: "", item: "", amount: "", status: "Payé", paymentMethod: "Espèces" },
+  expenses: { label: "", amount: "", category: "Général" },
   departments: { name: "", head: "", location: "", phone: "" },
   insuranceProviders: { name: "", coverageRate: "", phone: "", email: "" },
   insuranceClaims: { patientName: "", providerName: "", claimAmount: "", coveredAmount: "", status: "" },
@@ -84,7 +84,7 @@ const availablePermissions = [
   { key: "documents", label: "Documents" },
   { key: "staff", label: "Personnel" },
   { key: "users", label: "Utilisateurs" },
-  { key: "activity", label: "Activite" },
+  { key: "activity", label: "Activité" },
   { key: "reports", label: "Rapports" },
   { key: "invoices", label: "Facturation" }
 ];
@@ -92,37 +92,37 @@ const availablePermissions = [
 const genericModuleConfigs = {
   departments: {
     title: "Services",
-    fields: [["name", "Nom"], ["head", "Responsable"], ["location", "Localisation"], ["phone", "Telephone"]],
+    fields: [["name", "Nom"], ["head", "Responsable"], ["location", "Localisation"], ["phone", "Téléphone"]],
     columns: ["name", "head", "location", "phone"]
   },
   consultations: {
     title: "Consultations",
-    fields: [["patientName", "Patient"], ["department", "Service"], ["doctorName", "Medecin"], ["complaint", "Motif"], ["diagnosis", "Diagnostic"], ["consultationDate", "Date", "date"]],
+    fields: [["patientName", "Patient"], ["department", "Service"], ["doctorName", "Médecin"], ["complaint", "Motif"], ["diagnosis", "Diagnostic"], ["consultationDate", "Date", "date"]],
     columns: ["patientName", "department", "doctorName", "complaint", "diagnosis", "consultationDate"]
   },
   emergencies: {
     title: "Urgences",
-    fields: [["patientName", "Patient"], ["severity", "Gravite"], ["arrivalDate", "Date", "date"], ["arrivalTime", "Heure", "time"], ["notes", "Notes"], ["status", "Statut"]],
+    fields: [["patientName", "Patient"], ["severity", "Gravité"], ["arrivalDate", "Date", "date"], ["arrivalTime", "Heure", "time"], ["notes", "Notes"], ["status", "Statut"]],
     columns: ["patientName", "severity", "arrivalDate", "arrivalTime", "notes", "status"]
   },
   admissions: {
     title: "Hospitalisation",
-    fields: [["patientName", "Patient"], ["department", "Service"], ["room", "Chambre"], ["bedNumber", "Lit"], ["admissionDate", "Entree", "date"], ["dischargeDate", "Sortie", "date"], ["status", "Statut"]],
+    fields: [["patientName", "Patient"], ["department", "Service"], ["room", "Chambre"], ["bedNumber", "Lit"], ["admissionDate", "Entrée", "date"], ["dischargeDate", "Sortie", "date"], ["status", "Statut"]],
     columns: ["patientName", "department", "room", "bedNumber", "admissionDate", "dischargeDate", "status"]
   },
   beds: {
     title: "Lits",
-    fields: [["ward", "Unite"], ["room", "Chambre"], ["bedNumber", "Numero"], ["category", "Categorie"], ["status", "Statut"]],
+    fields: [["ward", "Unité"], ["room", "Chambre"], ["bedNumber", "Numéro"], ["category", "Catégorie"], ["status", "Statut"]],
     columns: ["ward", "room", "bedNumber", "category", "status"]
   },
   surgeries: {
     title: "Chirurgies",
-    fields: [["patientName", "Patient"], ["procedureName", "Intervention"], ["surgeon", "Chirurgien"], ["anesthetist", "Anesthesiste"], ["surgeryDate", "Date", "date"], ["status", "Statut"]],
+    fields: [["patientName", "Patient"], ["procedureName", "Intervention"], ["surgeon", "Chirurgien"], ["anesthetist", "Anesthésiste"], ["surgeryDate", "Date", "date"], ["status", "Statut"]],
     columns: ["patientName", "procedureName", "surgeon", "anesthetist", "surgeryDate", "status"]
   },
   labOrders: {
     title: "Laboratoire",
-    fields: [["patientName", "Patient"], ["examType", "Examen"], ["requestedBy", "Demandeur"], ["result", "Resultat"], ["status", "Statut"]],
+    fields: [["patientName", "Patient"], ["examType", "Examen"], ["requestedBy", "Demandeur"], ["result", "Résultat"], ["status", "Statut"]],
     columns: ["patientName", "examType", "requestedBy", "result", "status"]
   },
   imagingOrders: {
@@ -132,12 +132,12 @@ const genericModuleConfigs = {
   },
   prescriptions: {
     title: "Ordonnances",
-    fields: [["patientName", "Patient"], ["medication", "Medicament"], ["dosage", "Posologie"], ["duration", "Duree"], ["prescribedBy", "Prescripteur"]],
+    fields: [["patientName", "Patient"], ["medication", "Médicament"], ["dosage", "Posologie"], ["duration", "Durée"], ["prescribedBy", "Prescripteur"]],
     columns: ["patientName", "medication", "dosage", "duration", "prescribedBy"]
   },
   insuranceProviders: {
     title: "Assurances",
-    fields: [["name", "Nom"], ["coverageRate", "Taux couverture", "number"], ["phone", "Telephone"], ["email", "Email", "email"]],
+    fields: [["name", "Nom"], ["coverageRate", "Taux de couverture", "number"], ["phone", "Téléphone"], ["email", "Email", "email"]],
     columns: ["name", "coverageRate", "phone", "email"]
   },
   insuranceClaims: {
@@ -381,7 +381,7 @@ export default function App() {
     try {
       return await apiRequest(path);
     } catch (requestError) {
-      if (requestError.message === "Acces refuse pour ce role.") {
+      if (requestError.message === "Accès refusé pour ce rôle.") {
         return fallbackValue;
       }
       throw requestError;
@@ -569,7 +569,7 @@ export default function App() {
         method: "POST",
         body: JSON.stringify({
           patientId,
-          paymentMethod: "Especes"
+          paymentMethod: "Espèces"
         })
       });
       downloadReceipt(response.receipt);
@@ -633,11 +633,11 @@ export default function App() {
   async function submitPharmacySale(event) {
     event.preventDefault();
     if (!forms.pharmacySale.productId) {
-      setError("Veuillez selectionner un produit a vendre.");
+      setError("Veuillez sélectionner un produit à vendre.");
       return;
     }
     if (forms.pharmacySale.customerType === "existing" && !forms.pharmacySale.patientId) {
-      setError("Veuillez selectionner une patiente existante.");
+      setError("Veuillez sélectionner une patiente existante.");
       return;
     }
     if (forms.pharmacySale.customerType === "new" && !forms.pharmacySale.customerName.trim()) {
@@ -666,10 +666,10 @@ export default function App() {
       <div className="auth-shell">
         <div className="auth-card">
           <div>
-            <p className="eyebrow">Gestion complete de clinique et hopital</p>
-            <h1>Gestionnaire Clinique &amp; Hopital</h1>
+            <p className="eyebrow">Gestion complète de clinique et d'hôpital</p>
+            <h1>Gestionnaire Clinique &amp; Hôpital</h1>
             <p className="lead">
-              Une interface moderne pour piloter les soins, l&apos;administration, la pharmacie, l&apos;hospitalisation, la chirurgie et la caisse d&apos;un etablissement de sante.
+              Une interface moderne pour piloter les soins, l&apos;administration, la pharmacie, l&apos;hospitalisation, la chirurgie et la caisse d&apos;un établissement de santé.
             </p>
           </div>
           <div className="auth-tabs">
@@ -685,7 +685,7 @@ export default function App() {
               className={authMode === "signup" ? "tab-button active-tab" : "tab-button"}
               onClick={() => setAuthMode("signup")}
             >
-              Creer une clinique
+              Créer une clinique
             </button>
           </div>
           {authMode === "login" ? (
@@ -701,11 +701,11 @@ export default function App() {
                 </label>
                 <button type="submit">Se connecter</button>
               </form>
-              <p className="hint">Demo admin: admin@demo.maternite / admin123</p>
+              <p className="hint">Compte démo admin : admin@demo.maternite / admin123</p>
             </>
           ) : (
             <form className="stack" onSubmit={handleClinicSignup}>
-              <h3>Nouvel etablissement de sante</h3>
+              <h3>Nouvel établissement de santé</h3>
               <label>
                 Code identique
                 <input
@@ -740,7 +740,7 @@ export default function App() {
                 />
               </label>
               <label>
-                Telephone
+                Téléphone
                 <input
                   value={clinicSignup.clinic.phone}
                   onChange={(event) => setClinicSignup({
@@ -841,7 +841,7 @@ export default function App() {
                 </button>
               ) : null}
 
-              <button type="submit">Creer la clinique</button>
+              <button type="submit">Créer la clinique</button>
             </form>
           )}
           {error ? <p className="error">{error}</p> : null}
@@ -854,7 +854,7 @@ export default function App() {
     { label: "Patientes", value: data.dashboard?.summary?.patients ?? 0 },
     { label: "Accouchements", value: data.dashboard?.summary?.births ?? 0 },
     { label: "Revenus", value: `${data.dashboard?.summary?.revenue ?? 0} FCFA` },
-    { label: "Depenses", value: `${data.dashboard?.summary?.expenses ?? 0} FCFA` }
+    { label: "Dépenses", value: `${data.dashboard?.summary?.expenses ?? 0} FCFA` }
   ];
 
   return (
@@ -878,7 +878,7 @@ export default function App() {
           ))}
         </nav>
         <button className="secondary" onClick={handleLogout}>
-          Deconnexion
+          Déconnexion
         </button>
       </aside>
 
@@ -886,7 +886,7 @@ export default function App() {
         <header className="topbar">
           <div>
             <p className="eyebrow">Plateforme multi-utilisateurs</p>
-            <h1>Tableau de bord de l'etablissement</h1>
+            <h1>Tableau de bord de l'établissement</h1>
           </div>
           <div className="topbar-actions">
             <button type="button" className="secondary" onClick={loadAll}>
@@ -897,7 +897,7 @@ export default function App() {
                 Installer l'application
               </button>
             ) : null}
-            <div className="status-pill">{loading ? "Chargement..." : "Synchronise"}</div>
+            <div className="status-pill">{loading ? "Chargement..." : "Synchronisé"}</div>
           </div>
         </header>
 
@@ -915,7 +915,7 @@ export default function App() {
             </div>
             <div className="grid two-columns">
               <article className="panel">
-                <h3>Rendez-vous a venir</h3>
+                <h3>Rendez-vous à venir</h3>
                 <SimpleTable rows={data.dashboard?.upcomingAppointments ?? []} columns={["patientName", "service", "date", "time", "status"]} />
               </article>
               <article className="panel">
@@ -935,7 +935,7 @@ export default function App() {
                   {data.clinic.logo ? <img className="clinic-logo" src={data.clinic.logo} alt="Logo clinique" /> : null}
                   <p><strong>Nom :</strong> {data.clinic.name}</p>
                   <p><strong>Adresse :</strong> {data.clinic.address || "-"}</p>
-                  <p><strong>Telephone :</strong> {data.clinic.phone || "-"}</p>
+                  <p><strong>Téléphone :</strong> {data.clinic.phone || "-"}</p>
                   <p><strong>Email :</strong> {data.clinic.email || "-"}</p>
                   <p><strong>Type :</strong> {data.clinic.type || "-"}</p>
                 </div>
@@ -958,7 +958,7 @@ export default function App() {
                     <input value={clinicForm.address} onChange={(event) => setClinicForm({ ...clinicForm, address: event.target.value })} />
                   </label>
                   <label>
-                    Telephone
+                    Téléphone
                     <input value={clinicForm.phone} onChange={(event) => setClinicForm({ ...clinicForm, phone: event.target.value })} />
                   </label>
                   <label>
@@ -1020,7 +1020,7 @@ export default function App() {
                   <input type="number" value={forms.patients.age} onChange={(event) => updateForm("patients", { ...forms.patients, age: event.target.value }, setForms)} />
                 </label>
                 <label>
-                  Telephone
+                  Téléphone
                   <input value={forms.patients.phone} onChange={(event) => updateForm("patients", { ...forms.patients, phone: event.target.value }, setForms)} />
                 </label>
                 <label>
@@ -1033,7 +1033,7 @@ export default function App() {
                     value={forms.patients.serviceStatusId}
                     onChange={(event) => updateForm("patients", { ...forms.patients, serviceStatusId: event.target.value }, setForms)}
                   >
-                    <option value="">Selectionner un statut</option>
+                    <option value="">Sélectionner un statut</option>
                     {data.serviceStatuses.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.label}
@@ -1061,7 +1061,7 @@ export default function App() {
             <article className="panel">
               <h3>Statuts et tarifs</h3>
               {session.role !== "admin" ? (
-                <p className="muted">Seul l'administrateur peut gerer les statuts.</p>
+                <p className="muted">Seul l'administrateur peut gérer les statuts.</p>
               ) : (
                 <ServiceStatusList rows={data.serviceStatuses} onSave={(id, payload) => apiRequest(`/service-statuses/${id}`, { method: "PATCH", body: JSON.stringify(payload) }).then(loadAll).catch((e) => setError(e.message))} />
               )}
@@ -1131,7 +1131,7 @@ export default function App() {
                     <input value={forms.inventory.name} onChange={(event) => updateForm("inventory", { ...forms.inventory, name: event.target.value }, setForms)} />
                   </label>
                   <label>
-                    Categorie
+                    Catégorie
                     <input value={forms.inventory.category} onChange={(event) => updateForm("inventory", { ...forms.inventory, category: event.target.value }, setForms)} />
                   </label>
                   <label>
@@ -1144,7 +1144,7 @@ export default function App() {
                     <input type="number" value={forms.inventory.quantity} onChange={(event) => updateForm("inventory", { ...forms.inventory, quantity: event.target.value }, setForms)} />
                   </label>
                   <label>
-                    Unite
+                    Unité
                     <input value={forms.inventory.unit} onChange={(event) => updateForm("inventory", { ...forms.inventory, unit: event.target.value }, setForms)} />
                   </label>
                   <label>
@@ -1166,7 +1166,7 @@ export default function App() {
                       value={forms.pharmacySale.productId}
                       onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, productId: event.target.value }, setForms)}
                     >
-                      <option value="">Selectionner un produit</option>
+                      <option value="">Sélectionner un produit</option>
                       {data.inventory.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name} - {item.price} FCFA - stock {item.quantity}
@@ -1209,7 +1209,7 @@ export default function App() {
                         value={forms.pharmacySale.patientId}
                         onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, patientId: event.target.value }, setForms)}
                       >
-                        <option value="">Selectionner une patiente</option>
+                        <option value="">Sélectionner une patiente</option>
                         {data.patients.map((patient) => (
                           <option key={patient.id} value={patient.id}>
                             {patient.fullName} - {patient.phone || "-"}
@@ -1234,7 +1234,7 @@ export default function App() {
                         />
                       </label>
                       <label>
-                        Telephone
+                        Téléphone
                         <input
                           value={forms.pharmacySale.customerPhone}
                           onChange={(event) => updateForm("pharmacySale", { ...forms.pharmacySale, customerPhone: event.target.value }, setForms)}
@@ -1245,7 +1245,7 @@ export default function App() {
                   <p className="hint">
                     Montant total: {getPharmacySaleTotal(data.inventory, forms.pharmacySale.productId, forms.pharmacySale.quantity)} FCFA
                   </p>
-                  <button type="submit">Valider la vente et generer le recu</button>
+                  <button type="submit">Valider la vente et générer le reçu</button>
                 </form>
               </div>
             }
@@ -1268,7 +1268,7 @@ export default function App() {
           <section className="grid two-columns">
             <article className="panel">
               <h3>Patientes en attente de paiement</h3>
-              <PendingPaymentsList rows={data.patients.filter((item) => item.paymentStatus !== "Paiement effectue a la caisse" && item.serviceStatusLabel)} onPay={payPatientStatus} />
+              <PendingPaymentsList rows={data.patients.filter((item) => item.paymentStatus !== "Paiement effectué à la caisse" && item.serviceStatusLabel)} onPay={payPatientStatus} />
             </article>
             <article className="panel">
               <h3>Factures et paiements</h3>
@@ -1281,9 +1281,9 @@ export default function App() {
               <InvoicesList rows={data.invoices} />
             </article>
             <article className="panel">
-              <h3>Depenses</h3>
+              <h3>Dépenses</h3>
               <ResourceForm
-                fields={[["label", "Libelle"], ["amount", "Montant", "number"], ["category", "Categorie"]]}
+                fields={[["label", "Libellé"], ["amount", "Montant", "number"], ["category", "Catégorie"]]}
                 value={forms.expenses}
                 onChange={(value) => updateForm("expenses", value, setForms)}
                 onSubmit={() => submitResource("expenses", "expenses")}
@@ -1298,7 +1298,7 @@ export default function App() {
             title="Personnel"
             form={
               <ResourceForm
-                fields={[["fullName", "Nom complet"], ["role", "Role"], ["department", "Service"], ["phone", "Telephone"], ["schedule", "Planning"], ["performanceScore", "Performance", "number"]]}
+                fields={[["fullName", "Nom complet"], ["role", "Rôle"], ["department", "Service"], ["phone", "Téléphone"], ["schedule", "Planning"], ["performanceScore", "Performance", "number"]]}
                 value={forms.staff}
                 onChange={(value) => updateForm("staff", value, setForms)}
                 onSubmit={() => submitResource("staff", "staff")}
@@ -1316,12 +1316,12 @@ export default function App() {
                 <h3>Gestion des utilisateurs</h3>
                 {session.role === "admin" ? (
                   <button type="button" onClick={() => setShowUserModal(true)}>
-                    Creer un utilisateur
+                    Créer un utilisateur
                   </button>
                 ) : null}
               </div>
               {session.role !== "admin" ? (
-                <p className="muted">Acces reserve a l'administrateur.</p>
+                <p className="muted">Accès réservé à l'administrateur.</p>
               ) : (
                 <UsersTable
                   rows={data.users}
@@ -1340,7 +1340,7 @@ export default function App() {
             <article className="panel">
               <h3>Connexions et actions des utilisateurs</h3>
               {session.role !== "admin" ? (
-                <p className="muted">Acces reserve a l'administrateur.</p>
+                <p className="muted">Accès réservé à l'administrateur.</p>
               ) : (
                 <AuditTable rows={data.logs} />
               )}
@@ -1348,7 +1348,7 @@ export default function App() {
             <article className="panel">
               <h3>Ventes en caisse</h3>
               {session.role !== "admin" ? (
-                <p className="muted">Acces reserve a l'administrateur.</p>
+                <p className="muted">Accès réservé à l'administrateur.</p>
               ) : (
                 <SalesTable rows={data.sales} />
               )}
@@ -1425,7 +1425,7 @@ export default function App() {
                     <p>Cas avec complications: {data.reports.medical.complications}</p>
                   </div>
                 ) : (
-                  <p className="muted">Acces reserve aux profils medicaux et administratifs.</p>
+                  <p className="muted">Accès réservé aux profils médicaux et administratifs.</p>
                 )}
               </article>
               <article className="panel">
@@ -1433,12 +1433,12 @@ export default function App() {
                 {data.reports?.financial ? (
                   <div className="report-list">
                     <p>Revenus totaux: {data.reports.financial.totalRevenue} FCFA</p>
-                    <p>Depenses totales: {data.reports.financial.totalExpenses} FCFA</p>
+                    <p>Dépenses totales: {data.reports.financial.totalExpenses} FCFA</p>
                     <p>Nombre de factures: {data.reports.financial.invoiceCount}</p>
-                    <p>Nombre de depenses: {data.reports.financial.expenseCount}</p>
+                    <p>Nombre de dépenses: {data.reports.financial.expenseCount}</p>
                   </div>
                 ) : (
-                  <p className="muted">Acces reserve aux profils financiers et administratifs.</p>
+                  <p className="muted">Accès réservé aux profils financiers et administratifs.</p>
                 )}
               </article>
             </div>
@@ -1451,7 +1451,7 @@ export default function App() {
                   columns={["motherName", "babyName", "deliveryType", "birthDate", "birthTime", "motherStatus", "babyStatus"]}
                 />
               ) : (
-                <p className="muted">Acces reserve aux profils medicaux et administratifs.</p>
+                <p className="muted">Accès réservé aux profils médicaux et administratifs.</p>
               )}
             </article>
           </section>
@@ -1462,7 +1462,7 @@ export default function App() {
         <div className="modal-backdrop" onClick={() => setShowUserModal(false)}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="section-header">
-              <h3>Creer un utilisateur</h3>
+              <h3>Créer un utilisateur</h3>
               <button type="button" className="secondary" onClick={() => setShowUserModal(false)}>
                 Fermer
               </button>
@@ -1498,7 +1498,7 @@ export default function App() {
                 <input type="checkbox" checked={forms.users.isActive} onChange={(event) => updateForm("users", { ...forms.users, isActive: event.target.checked }, setForms)} />
                 Compte actif
               </label>
-              <button type="submit">Creer le compte</button>
+              <button type="submit">Créer le compte</button>
             </form>
           </div>
         </div>
@@ -1631,9 +1631,9 @@ function InventoryTable({ rows }) {
           <tr>
             <th>Photo</th>
             <th>Nom</th>
-            <th>Categorie</th>
+            <th>Catégorie</th>
             <th>Stock</th>
-            <th>Unite</th>
+            <th>Unité</th>
             <th>Prix</th>
             <th>Seuil</th>
           </tr>
@@ -1680,7 +1680,7 @@ function PatientList({ rows, serviceStatuses, onAssignStatus }) {
           </tr>
           <tr>
             <th>Nom</th>
-            <th>Telephone</th>
+            <th>Téléphone</th>
             <th>Statut actif</th>
             <th>Prix</th>
             <th>Paiement</th>
@@ -1709,14 +1709,14 @@ function PatientRow({ patient, serviceStatuses, onAssignStatus }) {
       <td>{patient.serviceStatusLabel || patient.status || "-"}</td>
       <td>{patient.servicePrice || 0} FCFA</td>
       <td>
-        <span className={patient.paymentStatus === "Paiement effectue a la caisse" ? "status-active" : "status-inactive"}>
+        <span className={patient.paymentStatus === "Paiement effectué à la caisse" ? "status-active" : "status-inactive"}>
           {patient.paymentStatus || "En attente"}
         </span>
       </td>
       <td>{patient.pregnancyWeeks || "-"} semaines</td>
       <td>
         <select value={nextStatusId} onChange={(event) => setNextStatusId(event.target.value)}>
-          <option value="">Selectionner un statut</option>
+          <option value="">Sélectionner un statut</option>
           {serviceStatuses.map((item) => (
             <option key={item.id} value={item.id}>
               {item.label} - {item.price} FCFA
@@ -1737,7 +1737,7 @@ function ServiceStatusList({ rows, onSave }) {
   const [query, setQuery] = useState("");
 
   if (!rows?.length) {
-    return <p className="muted">Aucun statut configure.</p>;
+    return <p className="muted">Aucun statut configuré.</p>;
   }
 
   const filteredRows = filterTableRows(rows, query, (row) => `${row.label} ${row.price}`);
@@ -1832,7 +1832,7 @@ function PendingPaymentsList({ rows, onPay }) {
               <td>{row.paymentStatus || "En attente"}</td>
               <td>
                 <button type="button" onClick={() => onPay(row.id)}>
-                  Valider le paiement a la caisse
+                  Valider le paiement à la caisse
                 </button>
               </td>
             </tr>
@@ -1871,7 +1871,7 @@ function InvoicesList({ rows }) {
             <th>Montant</th>
             <th>Statut</th>
             <th>Paiement</th>
-            <th>Recu</th>
+            <th>Reçu</th>
           </tr>
         </thead>
         <tbody>
@@ -1899,7 +1899,7 @@ function InvoicesList({ rows }) {
                     })
                   }
                 >
-                  Telecharger le recu
+                  Télécharger le reçu
                 </button>
               </td>
             </tr>
@@ -1914,7 +1914,7 @@ function AuditTable({ rows }) {
   const [query, setQuery] = useState("");
 
   if (!rows?.length) {
-    return <p className="muted">Aucune activite enregistree.</p>;
+    return <p className="muted">Aucune activité enregistrée.</p>;
   }
 
   const filteredRows = filterTableRows(
@@ -1963,7 +1963,7 @@ function SalesTable({ rows }) {
   const [query, setQuery] = useState("");
 
   if (!rows?.length) {
-    return <p className="muted">Aucune vente enregistree.</p>;
+    return <p className="muted">Aucune vente enregistrée.</p>;
   }
 
   const filteredRows = filterTableRows(
@@ -2033,10 +2033,10 @@ function UsersTable({ rows, onToggle, onResetPassword, onSave, onUpdate }) {
             </th>
           </tr>
           <tr>
-            <th>Etat</th>
+            <th>État</th>
             <th>Nom complet</th>
             <th>Email</th>
-            <th>Role</th>
+            <th>Rôle</th>
             <th>Permissions</th>
             <th>Actions</th>
           </tr>
@@ -2098,10 +2098,10 @@ function UserCard({ user, onToggle, onResetPassword, onSave, onUpdate }) {
             Enregistrer les droits
           </button>
           <button type="button" className="secondary" onClick={onToggle}>
-            {user.isActive ? "Desactiver" : "Activer"}
+            {user.isActive ? "Désactiver" : "Activer"}
           </button>
           <button type="button" className="secondary" onClick={onResetPassword}>
-            Reinitialiser mot de passe
+            Réinitialiser le mot de passe
           </button>
         </div>
       </td>
@@ -2220,21 +2220,21 @@ function formatLogDate(value) {
 function humanizeAction(action) {
   const map = {
     "auth:login": "Connexion",
-    "create:patients": "Creation patiente",
-    "create:serviceStatuses": "Creation statut",
-    "create:appointments": "Creation rendez-vous",
+    "create:patients": "Création patiente",
+    "create:serviceStatuses": "Création du statut",
+    "create:appointments": "Création du rendez-vous",
     "create:births": "Enregistrement accouchement",
-    "create:inventory": "Ajout produit pharmacie",
+    "create:inventory": "Ajout d'un produit de pharmacie",
     "create:invoices": "Vente / facture",
     "pharmacy:sale": "Vente pharmacie",
-    "create:expenses": "Enregistrement depense",
-    "create:users": "Creation utilisateur",
+    "create:expenses": "Enregistrement d'une dépense",
+    "create:users": "Création utilisateur",
     "update:user": "Modification utilisateur",
-    "update:serviceStatus": "Modification statut",
+    "update:serviceStatus": "Modification du statut",
     "assign:patientStatus": "Affectation statut patiente",
-    "cashier:paymentCompleted": "Paiement effectue a la caisse",
+    "cashier:paymentCompleted": "Paiement effectué à la caisse",
     "update:clinic": "Modification clinique",
-    "create:clinic": "Creation clinique"
+    "create:clinic": "Création de la clinique"
   };
 
   return map[action] || action;
@@ -2303,7 +2303,7 @@ function downloadReceipt(receipt) {
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <title>Recu de paiement</title>
+    <title>Reçu de paiement</title>
     <style>
       body { font-family: Arial, sans-serif; padding: 24px; color: #143126; }
       .card { max-width: 720px; margin: 0 auto; border: 1px solid #d9e5de; border-radius: 18px; padding: 24px; }
@@ -2320,7 +2320,7 @@ function downloadReceipt(receipt) {
       <div class="head">
         <div>
           <h1>${escapeHtml(receipt.clinicName || "Clinique")}</h1>
-          <p>Recu de paiement</p>
+          <p>Reçu de paiement</p>
         </div>
         ${receipt.clinicLogo ? `<img class="logo" src="${receipt.clinicLogo}" alt="Logo clinique" />` : ""}
       </div>
@@ -2328,9 +2328,9 @@ function downloadReceipt(receipt) {
       <div class="row"><span class="strong">Heure :</span> ${timeText}</div>
       <div class="row"><span class="strong">Patiente :</span> ${escapeHtml(receipt.patientName || "-")}</div>
       <div class="row"><span class="strong">Age :</span> ${escapeHtml(String(receipt.patientAge || "-"))}</div>
-      <div class="row"><span class="strong">Telephone :</span> ${escapeHtml(receipt.patientPhone || "-")}</div>
+      <div class="row"><span class="strong">Téléphone :</span> ${escapeHtml(receipt.patientPhone || "-")}</div>
       <div class="row"><span class="strong">Statut :</span> ${escapeHtml(receipt.status || "-")}</div>
-      <div class="row"><span class="strong">Montant paye :</span> ${escapeHtml(String(receipt.amount || 0))} FCFA</div>
+      <div class="row"><span class="strong">Montant payé :</span> ${escapeHtml(String(receipt.amount || 0))} FCFA</div>
       <div class="row"><span class="strong">Caisse :</span> ${escapeHtml(receipt.cashierName || "-")}</div>
     </div>
   </body>

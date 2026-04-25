@@ -36,7 +36,7 @@ export function createServerApp(app) {
     }
 
     if (user.isActive === false) {
-      return res.status(403).json({ message: "Ce compte est desactive." });
+      return res.status(403).json({ message: "Ce compte est désactivé." });
     }
 
     appendLog({
@@ -96,7 +96,7 @@ export function createServerApp(app) {
     );
 
     if (invalidAdmin) {
-      return res.status(400).json({ message: "Chaque administrateur doit avoir un nom, un email et un mot de passe." });
+      return res.status(400).json({ message: "Chaque administrateur doit avoir un nom, un e-mail et un mot de passe." });
     }
 
     const db = getDb();
@@ -107,7 +107,7 @@ export function createServerApp(app) {
     const duplicateRequest = new Set(normalizedEmails).size !== normalizedEmails.length;
 
     if (duplicateExisting || duplicateRequest) {
-      return res.status(409).json({ message: "Un email administrateur existe deja." });
+      return res.status(409).json({ message: "Un e-mail administrateur existe déjà." });
     }
 
     const created = createClinicWithAdmins({ clinic, admins });
@@ -134,7 +134,7 @@ export function createServerApp(app) {
     }
     const user = getUserFromAuthHeader(req.headers.authorization);
     if (!user) {
-      return res.status(401).json({ message: "Session invalide ou expiree." });
+      return res.status(401).json({ message: "Session invalide ou expirée." });
     }
     req.user = user;
     next();
@@ -298,7 +298,7 @@ export function createServerApp(app) {
     );
 
     if (exists) {
-      return res.status(409).json({ message: "Un utilisateur avec cet email existe deja." });
+      return res.status(409).json({ message: "Un utilisateur avec cet e-mail existe déjà." });
     }
 
     const created = addEntity("users", {
@@ -365,7 +365,7 @@ export function createServerApp(app) {
           item.email.toLowerCase() === req.body.email.toLowerCase()
       );
       if (duplicateEmail) {
-        return res.status(409).json({ message: "Cet email est deja utilise." });
+        return res.status(409).json({ message: "Cet e-mail est déjà utilisé." });
       }
       updates.email = req.body.email;
     }
@@ -423,7 +423,7 @@ export function createServerApp(app) {
       serviceStatusId: serviceStatus.id,
       serviceStatusLabel: serviceStatus.label,
       servicePrice: Number(serviceStatus.price || 0),
-      paymentStatus: "En attente de paiement caisse"
+      paymentStatus: "En attente de paiement à la caisse"
     });
 
     appendLog({
@@ -459,7 +459,7 @@ export function createServerApp(app) {
     }
 
     if (patient.paymentStatus === "Paiement effectue a la caisse") {
-      return res.status(400).json({ message: "Ce statut est deja paye." });
+      return res.status(400).json({ message: "Ce statut est déjà payé." });
     }
 
     const invoice = addEntity("invoices", {
@@ -472,15 +472,15 @@ export function createServerApp(app) {
       patientPhone: patient.phone || "",
       item: patient.serviceStatusLabel,
       amount: Number(patient.servicePrice || 0),
-      status: "Paye",
-      paymentMethod: req.body?.paymentMethod || "Especes",
+      status: "Payé",
+      paymentMethod: req.body?.paymentMethod || "Espèces",
       clinicName: clinic?.name || "",
       clinicLogo: clinic?.logo || "",
       paidAt: new Date().toISOString()
     });
 
     const updatedPatient = updateEntity("patients", patient.id, req.user.clinicId, {
-      paymentStatus: "Paiement effectue a la caisse"
+      paymentStatus: "Paiement effectué à la caisse"
     });
 
     appendLog({
@@ -493,7 +493,7 @@ export function createServerApp(app) {
       details: `${patient.fullName} - ${patient.serviceStatusLabel}`,
       metadata: {
         amount: patient.servicePrice,
-        paymentMethod: req.body?.paymentMethod || "Especes"
+        paymentMethod: req.body?.paymentMethod || "Espèces"
       }
     });
 
@@ -527,7 +527,7 @@ export function createServerApp(app) {
 
     const quantity = Number(req.body?.quantity || 0);
     if (!quantity || quantity <= 0) {
-      return res.status(400).json({ message: "Quantite invalide." });
+      return res.status(400).json({ message: "Quantité invalide." });
     }
 
     if (Number(product.quantity || 0) < quantity) {
@@ -577,8 +577,8 @@ export function createServerApp(app) {
       patientPhone: customerPhone,
       item: `${product.name} x${quantity}`,
       amount: totalAmount,
-      status: "Paye",
-      paymentMethod: req.body?.paymentMethod || "Especes",
+      status: "Payé",
+      paymentMethod: req.body?.paymentMethod || "Espèces",
       clinicName: clinic?.name || "",
       clinicLogo: clinic?.logo || "",
       paidAt: new Date().toISOString(),
@@ -674,7 +674,7 @@ function registerCrud(app, name, access) {
       );
 
       if (!serviceStatus) {
-        return res.status(400).json({ message: "Veuillez selectionner un statut valide." });
+        return res.status(400).json({ message: "Veuillez sélectionner un statut valide." });
       }
 
       payload = {

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "./api.js";
 
 const sections = [
-  { key: "dashboard", label: "Dashboard" },
+  { key: "dashboard", label: "Tableau de bord" },
   { key: "clinic", label: "Clinique" },
   { key: "departments", label: "Services" },
   { key: "serviceStatuses", label: "Statuts" },
@@ -667,7 +667,7 @@ export default function App() {
         <div className="auth-card">
           <div>
             <p className="eyebrow">Gestion complete de clinique et hopital</p>
-            <h1>Clinique &amp; Hopital Manager</h1>
+            <h1>Gestionnaire Clinique &amp; Hopital</h1>
             <p className="lead">
               Une interface moderne pour piloter les soins, l&apos;administration, la pharmacie, l&apos;hospitalisation, la chirurgie et la caisse d&apos;un etablissement de sante.
             </p>
@@ -886,7 +886,7 @@ export default function App() {
         <header className="topbar">
           <div>
             <p className="eyebrow">Plateforme multi-utilisateurs</p>
-            <h1>Tableau de bord de la clinique</h1>
+            <h1>Tableau de bord de l'etablissement</h1>
           </div>
           <div className="topbar-actions">
             <button type="button" className="secondary" onClick={loadAll}>
@@ -2141,7 +2141,7 @@ function TableFilterInput({ value, onChange }) {
       className="table-filter-input"
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      placeholder="Filtrer automatiquement dans ce tableau..."
+      placeholder="Filtrer dans ce tableau..."
     />
   );
 }

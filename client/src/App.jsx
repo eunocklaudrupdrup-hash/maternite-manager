@@ -4,12 +4,24 @@ import { apiRequest } from "./api.js";
 const sections = [
   { key: "dashboard", label: "Dashboard" },
   { key: "clinic", label: "Clinique" },
+  { key: "departments", label: "Services" },
   { key: "serviceStatuses", label: "Statuts" },
   { key: "patients", label: "Patientes" },
   { key: "appointments", label: "Rendez-vous" },
+  { key: "consultations", label: "Consultations" },
+  { key: "emergencies", label: "Urgences" },
+  { key: "admissions", label: "Hospitalisation" },
+  { key: "beds", label: "Lits" },
+  { key: "surgeries", label: "Chirurgies" },
   { key: "births", label: "Naissances" },
+  { key: "labOrders", label: "Laboratoire" },
+  { key: "imagingOrders", label: "Imagerie" },
+  { key: "prescriptions", label: "Ordonnances" },
   { key: "inventory", label: "Pharmacie" },
   { key: "finance", label: "Caisse" },
+  { key: "insuranceProviders", label: "Assurances" },
+  { key: "insuranceClaims", label: "Prises en charge" },
+  { key: "documents", label: "Documents" },
   { key: "staff", label: "Personnel" },
   { key: "users", label: "Utilisateurs" },
   { key: "activity", label: "Activite" },
@@ -19,7 +31,15 @@ const sections = [
 const initialForms = {
   patients: { fullName: "", age: "", phone: "", pregnancyWeeks: "", serviceStatusId: "", history: "" },
   appointments: { patientName: "", service: "", staffName: "", date: "", time: "", status: "Confirme" },
+  consultations: { patientName: "", department: "", doctorName: "", complaint: "", diagnosis: "", consultationDate: "" },
+  emergencies: { patientName: "", severity: "", arrivalDate: "", arrivalTime: "", notes: "", status: "" },
+  admissions: { patientName: "", department: "", room: "", bedNumber: "", admissionDate: "", dischargeDate: "", status: "" },
+  beds: { ward: "", room: "", bedNumber: "", category: "", status: "" },
+  surgeries: { patientName: "", procedureName: "", surgeon: "", anesthetist: "", surgeryDate: "", status: "" },
   births: { motherName: "", babyName: "", sex: "Feminin", weightKg: "", heightCm: "", deliveryType: "Naturel", complications: "", birthDate: "", birthTime: "", motherStatus: "Stable", babyStatus: "Stable" },
+  labOrders: { patientName: "", examType: "", requestedBy: "", result: "", status: "" },
+  imagingOrders: { patientName: "", imagingType: "", requestedBy: "", report: "", status: "" },
+  prescriptions: { patientName: "", medication: "", dosage: "", duration: "", prescribedBy: "" },
   inventory: { name: "", category: "Medicament", photo: "", quantity: "", unit: "", lowStockThreshold: "", price: "" },
   pharmacySale: {
     productId: "",
@@ -33,6 +53,10 @@ const initialForms = {
   },
   invoices: { patientName: "", item: "", amount: "", status: "Paye", paymentMethod: "Especes" },
   expenses: { label: "", amount: "", category: "General" },
+  departments: { name: "", head: "", location: "", phone: "" },
+  insuranceProviders: { name: "", coverageRate: "", phone: "", email: "" },
+  insuranceClaims: { patientName: "", providerName: "", claimAmount: "", coveredAmount: "", status: "" },
+  documents: { patientName: "", documentType: "", title: "", fileName: "" },
   staff: { fullName: "", role: "", department: "", phone: "", schedule: "", performanceScore: "" },
   users: { fullName: "", email: "", role: "receptionist", password: "", permissions: ["patients", "appointments", "invoices"], isActive: true },
   serviceStatuses: { label: "", price: "" }
@@ -40,18 +64,93 @@ const initialForms = {
 
 const availablePermissions = [
   { key: "clinic", label: "Clinique" },
+  { key: "departments", label: "Services" },
   { key: "serviceStatuses", label: "Statuts" },
   { key: "patients", label: "Patientes" },
   { key: "appointments", label: "Rendez-vous" },
+  { key: "consultations", label: "Consultations" },
+  { key: "emergencies", label: "Urgences" },
+  { key: "admissions", label: "Hospitalisation" },
+  { key: "beds", label: "Lits" },
+  { key: "surgeries", label: "Chirurgies" },
   { key: "births", label: "Naissances" },
+  { key: "labOrders", label: "Laboratoire" },
+  { key: "imagingOrders", label: "Imagerie" },
+  { key: "prescriptions", label: "Ordonnances" },
   { key: "inventory", label: "Pharmacie" },
   { key: "finance", label: "Caisse" },
+  { key: "insuranceProviders", label: "Assurances" },
+  { key: "insuranceClaims", label: "Prises en charge" },
+  { key: "documents", label: "Documents" },
   { key: "staff", label: "Personnel" },
   { key: "users", label: "Utilisateurs" },
   { key: "activity", label: "Activite" },
   { key: "reports", label: "Rapports" },
   { key: "invoices", label: "Facturation" }
 ];
+
+const genericModuleConfigs = {
+  departments: {
+    title: "Services",
+    fields: [["name", "Nom"], ["head", "Responsable"], ["location", "Localisation"], ["phone", "Telephone"]],
+    columns: ["name", "head", "location", "phone"]
+  },
+  consultations: {
+    title: "Consultations",
+    fields: [["patientName", "Patient"], ["department", "Service"], ["doctorName", "Medecin"], ["complaint", "Motif"], ["diagnosis", "Diagnostic"], ["consultationDate", "Date", "date"]],
+    columns: ["patientName", "department", "doctorName", "complaint", "diagnosis", "consultationDate"]
+  },
+  emergencies: {
+    title: "Urgences",
+    fields: [["patientName", "Patient"], ["severity", "Gravite"], ["arrivalDate", "Date", "date"], ["arrivalTime", "Heure", "time"], ["notes", "Notes"], ["status", "Statut"]],
+    columns: ["patientName", "severity", "arrivalDate", "arrivalTime", "notes", "status"]
+  },
+  admissions: {
+    title: "Hospitalisation",
+    fields: [["patientName", "Patient"], ["department", "Service"], ["room", "Chambre"], ["bedNumber", "Lit"], ["admissionDate", "Entree", "date"], ["dischargeDate", "Sortie", "date"], ["status", "Statut"]],
+    columns: ["patientName", "department", "room", "bedNumber", "admissionDate", "dischargeDate", "status"]
+  },
+  beds: {
+    title: "Lits",
+    fields: [["ward", "Unite"], ["room", "Chambre"], ["bedNumber", "Numero"], ["category", "Categorie"], ["status", "Statut"]],
+    columns: ["ward", "room", "bedNumber", "category", "status"]
+  },
+  surgeries: {
+    title: "Chirurgies",
+    fields: [["patientName", "Patient"], ["procedureName", "Intervention"], ["surgeon", "Chirurgien"], ["anesthetist", "Anesthesiste"], ["surgeryDate", "Date", "date"], ["status", "Statut"]],
+    columns: ["patientName", "procedureName", "surgeon", "anesthetist", "surgeryDate", "status"]
+  },
+  labOrders: {
+    title: "Laboratoire",
+    fields: [["patientName", "Patient"], ["examType", "Examen"], ["requestedBy", "Demandeur"], ["result", "Resultat"], ["status", "Statut"]],
+    columns: ["patientName", "examType", "requestedBy", "result", "status"]
+  },
+  imagingOrders: {
+    title: "Imagerie",
+    fields: [["patientName", "Patient"], ["imagingType", "Examen"], ["requestedBy", "Demandeur"], ["report", "Compte rendu"], ["status", "Statut"]],
+    columns: ["patientName", "imagingType", "requestedBy", "report", "status"]
+  },
+  prescriptions: {
+    title: "Ordonnances",
+    fields: [["patientName", "Patient"], ["medication", "Medicament"], ["dosage", "Posologie"], ["duration", "Duree"], ["prescribedBy", "Prescripteur"]],
+    columns: ["patientName", "medication", "dosage", "duration", "prescribedBy"]
+  },
+  insuranceProviders: {
+    title: "Assurances",
+    fields: [["name", "Nom"], ["coverageRate", "Taux couverture", "number"], ["phone", "Telephone"], ["email", "Email", "email"]],
+    columns: ["name", "coverageRate", "phone", "email"]
+  },
+  insuranceClaims: {
+    title: "Prises en charge",
+    fields: [["patientName", "Patient"], ["providerName", "Assureur"], ["claimAmount", "Montant demande", "number"], ["coveredAmount", "Montant couvert", "number"], ["status", "Statut"]],
+    columns: ["patientName", "providerName", "claimAmount", "coveredAmount", "status"]
+  },
+  documents: {
+    title: "Documents",
+    fields: [["patientName", "Patient"], ["documentType", "Type"], ["title", "Titre"], ["fileName", "Fichier"]],
+    columns: ["patientName", "documentType", "title", "fileName"]
+  }
+};
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -61,13 +160,25 @@ export default function App() {
   const [data, setData] = useState({
     dashboard: null,
     clinic: null,
+    departments: [],
     patients: [],
     serviceStatuses: [],
     appointments: [],
+    consultations: [],
+    emergencies: [],
+    admissions: [],
+    beds: [],
+    surgeries: [],
     births: [],
+    labOrders: [],
+    imagingOrders: [],
+    prescriptions: [],
     inventory: [],
     invoices: [],
     expenses: [],
+    insuranceProviders: [],
+    insuranceClaims: [],
+    documents: [],
     staff: [],
     users: [],
     logs: [],
@@ -145,6 +256,7 @@ export default function App() {
     try {
       const dashboard = await safeRequest("/dashboard", null);
       const clinic = await safeRequest("/clinic", null);
+      const departments = await safeRequest("/departments", [], canAccessSection(session, "departments"));
       const serviceStatuses = await safeRequest(
         "/serviceStatuses",
         [],
@@ -163,12 +275,20 @@ export default function App() {
         [],
         canAccessSection(session, "appointments")
       );
+      const consultations = await safeRequest("/consultations", [], canAccessSection(session, "consultations"));
+      const emergencies = await safeRequest("/emergencies", [], canAccessSection(session, "emergencies"));
+      const admissions = await safeRequest("/admissions", [], canAccessSection(session, "admissions"));
+      const beds = await safeRequest("/beds", [], canAccessSection(session, "beds"));
+      const surgeries = await safeRequest("/surgeries", [], canAccessSection(session, "surgeries"));
       const births = await safeRequest(
         "/births",
         [],
         canAccessSection(session, "births") ||
           canAccessSection(session, "reports")
       );
+      const labOrders = await safeRequest("/labOrders", [], canAccessSection(session, "labOrders"));
+      const imagingOrders = await safeRequest("/imagingOrders", [], canAccessSection(session, "imagingOrders"));
+      const prescriptions = await safeRequest("/prescriptions", [], canAccessSection(session, "prescriptions"));
       const inventory = await safeRequest(
         "/inventory",
         [],
@@ -185,6 +305,9 @@ export default function App() {
         [],
         canAccessSection(session, "finance")
       );
+      const insuranceProviders = await safeRequest("/insuranceProviders", [], canAccessSection(session, "insuranceProviders"));
+      const insuranceClaims = await safeRequest("/insuranceClaims", [], canAccessSection(session, "insuranceClaims"));
+      const documents = await safeRequest("/documents", [], canAccessSection(session, "documents"));
       const staff = await safeRequest(
         "/staff",
         [],
@@ -207,7 +330,34 @@ export default function App() {
         reports = null;
       }
 
-      setData({ dashboard, clinic, serviceStatuses, patients, appointments, births, inventory, invoices, expenses, staff, users, logs, sales, reports });
+      setData({
+        dashboard,
+        clinic,
+        departments,
+        serviceStatuses,
+        patients,
+        appointments,
+        consultations,
+        emergencies,
+        admissions,
+        beds,
+        surgeries,
+        births,
+        labOrders,
+        imagingOrders,
+        prescriptions,
+        inventory,
+        invoices,
+        expenses,
+        insuranceProviders,
+        insuranceClaims,
+        documents,
+        staff,
+        users,
+        logs,
+        sales,
+        reports
+      });
       setClinicForm({
         name: clinic?.name || "",
         address: clinic?.address || "",
@@ -516,10 +666,10 @@ export default function App() {
       <div className="auth-shell">
         <div className="auth-card">
           <div>
-            <p className="eyebrow">Gestion complete de maternite</p>
-            <h1>Maternite Manager</h1>
+            <p className="eyebrow">Gestion complete de clinique et hopital</p>
+            <h1>Clinique &amp; Hopital Manager</h1>
             <p className="lead">
-              Une interface moderne pour piloter les soins, l&apos;administration, la pharmacie et la caisse d&apos;une clinique d&apos;accouchement.
+              Une interface moderne pour piloter les soins, l&apos;administration, la pharmacie, l&apos;hospitalisation, la chirurgie et la caisse d&apos;un etablissement de sante.
             </p>
           </div>
           <div className="auth-tabs">
@@ -555,7 +705,7 @@ export default function App() {
             </>
           ) : (
             <form className="stack" onSubmit={handleClinicSignup}>
-              <h3>Nouvelle clinique d&apos;accouchement</h3>
+              <h3>Nouvel etablissement de sante</h3>
               <label>
                 Code identique
                 <input
@@ -833,6 +983,21 @@ export default function App() {
               )}
             </article>
           </section>
+        )}
+
+        {Object.entries(genericModuleConfigs).map(([moduleKey, config]) =>
+          activeSection === moduleKey ? (
+            <GenericCrudSection
+              key={moduleKey}
+              title={config.title}
+              rows={data[moduleKey]}
+              fields={config.fields}
+              columns={config.columns}
+              formValue={forms[moduleKey]}
+              onChange={(value) => updateForm(moduleKey, value, setForms)}
+              onSubmit={() => submitResource(moduleKey, moduleKey)}
+            />
+          ) : null
         )}
 
         {activeSection === "patients" && (
@@ -1358,6 +1523,24 @@ function SectionLayout({ title, form, children }) {
         {form}
       </article>
     </section>
+  );
+}
+
+function GenericCrudSection({ title, rows, fields, columns, formValue, onChange, onSubmit }) {
+  return (
+    <SectionLayout
+      title={title}
+      form={
+        <ResourceForm
+          fields={fields}
+          value={formValue}
+          onChange={onChange}
+          onSubmit={onSubmit}
+        />
+      }
+    >
+      <SimpleTable rows={rows} columns={columns} />
+    </SectionLayout>
   );
 }
 
@@ -1976,7 +2159,12 @@ function canAccessSection(session, sectionKey) {
     return true;
   }
 
-  return Array.isArray(session.permissions) && session.permissions.includes(sectionKey);
+  const permissionKey = permissionForSection(sectionKey);
+  return Array.isArray(session.permissions) && session.permissions.includes(permissionKey);
+}
+
+function permissionForSection(sectionKey) {
+  return sectionKey;
 }
 
 function fileToDataUrl(file) {

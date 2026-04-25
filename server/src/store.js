@@ -126,7 +126,7 @@ export function createClinicWithAdmins({ clinic, admins }) {
     password: admin.password,
     role: "admin",
     isActive: true,
-    permissions: ["patients", "finance", "reports", "inventory", "staff", "users", "appointments", "births", "invoices"],
+    permissions: ["patients", "finance", "reports", "inventory", "staff", "users", "appointments", "births", "invoices", "clinic", "serviceStatuses", "activity", "consultations", "emergencies", "admissions", "surgeries", "labOrders", "imagingOrders", "prescriptions", "insuranceProviders", "insuranceClaims", "departments", "beds", "documents"],
     createdAt: now,
     updatedAt: now
   }));

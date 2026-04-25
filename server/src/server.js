@@ -200,6 +200,10 @@ export function createServerApp(app) {
 
   registerCrud(app, "clinics", { readRoles: ["admin"], writeRoles: ["admin"] });
   registerCrud(app, "staff", { readRoles: ["admin", "accountant", "receptionist"], writeRoles: ["admin"] });
+  registerCrud(app, "departments", {
+    readRoles: ["admin", "doctor", "midwife", "nurse", "accountant", "receptionist"],
+    writeRoles: ["admin"]
+  });
   registerCrud(app, "serviceStatuses", {
     readRoles: ["admin", "doctor", "midwife", "nurse", "accountant", "receptionist"],
     writeRoles: ["admin"]
@@ -212,9 +216,41 @@ export function createServerApp(app) {
     readRoles: ["admin", "doctor", "midwife", "receptionist"],
     writeRoles: ["admin", "doctor", "midwife", "receptionist"]
   });
+  registerCrud(app, "consultations", {
+    readRoles: ["admin", "doctor", "nurse", "receptionist"],
+    writeRoles: ["admin", "doctor", "nurse", "receptionist"]
+  });
+  registerCrud(app, "emergencies", {
+    readRoles: ["admin", "doctor", "nurse", "receptionist"],
+    writeRoles: ["admin", "doctor", "nurse", "receptionist"]
+  });
+  registerCrud(app, "admissions", {
+    readRoles: ["admin", "doctor", "nurse", "receptionist"],
+    writeRoles: ["admin", "doctor", "nurse", "receptionist"]
+  });
+  registerCrud(app, "beds", {
+    readRoles: ["admin", "doctor", "nurse", "receptionist"],
+    writeRoles: ["admin", "nurse", "receptionist"]
+  });
+  registerCrud(app, "surgeries", {
+    readRoles: ["admin", "doctor", "nurse"],
+    writeRoles: ["admin", "doctor"]
+  });
   registerCrud(app, "births", {
     readRoles: ["admin", "doctor", "midwife", "nurse"],
     writeRoles: ["admin", "doctor", "midwife"]
+  });
+  registerCrud(app, "labOrders", {
+    readRoles: ["admin", "doctor", "nurse", "receptionist"],
+    writeRoles: ["admin", "doctor", "nurse"]
+  });
+  registerCrud(app, "imagingOrders", {
+    readRoles: ["admin", "doctor", "nurse", "receptionist"],
+    writeRoles: ["admin", "doctor", "nurse"]
+  });
+  registerCrud(app, "prescriptions", {
+    readRoles: ["admin", "doctor", "nurse", "pharmacist"],
+    writeRoles: ["admin", "doctor"]
   });
   registerCrud(app, "inventory", {
     readRoles: ["admin", "pharmacist", "accountant"],
@@ -227,6 +263,18 @@ export function createServerApp(app) {
   registerCrud(app, "expenses", {
     readRoles: ["admin", "accountant"],
     writeRoles: ["admin", "accountant"]
+  });
+  registerCrud(app, "insuranceProviders", {
+    readRoles: ["admin", "accountant", "receptionist"],
+    writeRoles: ["admin", "accountant"]
+  });
+  registerCrud(app, "insuranceClaims", {
+    readRoles: ["admin", "accountant", "receptionist"],
+    writeRoles: ["admin", "accountant", "receptionist"]
+  });
+  registerCrud(app, "documents", {
+    readRoles: ["admin", "doctor", "nurse", "receptionist"],
+    writeRoles: ["admin", "doctor", "nurse", "receptionist"]
   });
   registerCrud(app, "notifications", {
     readRoles: ["admin", "doctor", "midwife", "nurse", "pharmacist", "accountant", "receptionist"],
@@ -658,13 +706,13 @@ function sanitizeUser(user) {
 
 function normalizePermissions(role, permissions) {
   const defaults = {
-    admin: ["patients", "finance", "reports", "inventory", "staff", "users"],
-    doctor: ["patients", "reports", "appointments"],
-    midwife: ["patients", "births", "appointments"],
-    nurse: ["patients", "births"],
-    pharmacist: ["inventory"],
-    accountant: ["finance", "reports"],
-    receptionist: ["patients", "appointments", "invoices"]
+    admin: ["patients", "finance", "reports", "inventory", "staff", "users", "clinic", "serviceStatuses", "activity", "consultations", "emergencies", "admissions", "surgeries", "labOrders", "imagingOrders", "prescriptions", "insuranceProviders", "insuranceClaims", "departments", "beds", "documents"],
+    doctor: ["patients", "reports", "appointments", "consultations", "surgeries", "labOrders", "imagingOrders", "prescriptions", "documents"],
+    midwife: ["patients", "births", "appointments", "consultations", "documents"],
+    nurse: ["patients", "births", "emergencies", "admissions", "beds", "labOrders", "documents"],
+    pharmacist: ["inventory", "prescriptions"],
+    accountant: ["finance", "reports", "insuranceProviders", "insuranceClaims", "invoices"],
+    receptionist: ["patients", "appointments", "invoices", "consultations", "admissions", "departments"]
   };
 
   if (!Array.isArray(permissions) || permissions.length === 0) {

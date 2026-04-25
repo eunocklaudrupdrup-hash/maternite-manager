@@ -23,7 +23,7 @@ export function createSeedData() {
         password: "admin123",
         role: "admin",
         isActive: true,
-        permissions: ["patients", "finance", "reports", "inventory", "staff"]
+        permissions: ["patients", "finance", "reports", "inventory", "staff", "clinic", "serviceStatuses", "users", "activity", "consultations", "emergencies", "admissions", "surgeries", "labOrders", "imagingOrders", "prescriptions", "insuranceProviders", "insuranceClaims", "departments", "beds", "documents"]
       },
       {
         id: "usr_recep001",
@@ -33,7 +33,29 @@ export function createSeedData() {
         password: "welcome123",
         role: "receptionist",
         isActive: true,
-        permissions: ["patients", "appointments", "invoices"]
+        permissions: ["patients", "appointments", "invoices", "consultations"]
+      }
+    ],
+    departments: [
+      {
+        id: "dep_srv_001",
+        clinicId,
+        name: "Consultation generale",
+        head: "Dr. Mireille Akakpo",
+        location: "Batiment A",
+        phone: "+229 90000010",
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-04-01T08:00:00.000Z"
+      },
+      {
+        id: "dep_srv_002",
+        clinicId,
+        name: "Maternite",
+        head: "Soeur Clarisse",
+        location: "Batiment B",
+        phone: "+229 90000011",
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-04-01T08:00:00.000Z"
       }
     ],
     staff: [
@@ -110,6 +132,76 @@ export function createSeedData() {
         updatedAt: "2026-04-10T08:00:00.000Z"
       }
     ],
+    consultations: [
+      {
+        id: "con_001",
+        clinicId,
+        patientName: "Nadia Hounkpe",
+        department: "Consultation generale",
+        doctorName: "Dr. Mireille Akakpo",
+        complaint: "Douleurs pelviennes",
+        diagnosis: "Surveillance clinique",
+        consultationDate: "2026-04-12",
+        createdAt: "2026-04-12T10:00:00.000Z",
+        updatedAt: "2026-04-12T10:00:00.000Z"
+      }
+    ],
+    emergencies: [
+      {
+        id: "urg_001",
+        clinicId,
+        patientName: "Kossi Dossou",
+        severity: "Moderee",
+        arrivalDate: "2026-04-13",
+        arrivalTime: "18:10",
+        notes: "Douleur abdominale aigue",
+        status: "Stabilise",
+        createdAt: "2026-04-13T18:10:00.000Z",
+        updatedAt: "2026-04-13T18:10:00.000Z"
+      }
+    ],
+    beds: [
+      {
+        id: "bed_001",
+        clinicId,
+        ward: "Hospitalisation",
+        room: "H1",
+        bedNumber: "01",
+        category: "Standard",
+        status: "Disponible",
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-04-01T08:00:00.000Z"
+      }
+    ],
+    admissions: [
+      {
+        id: "adm_001",
+        clinicId,
+        patientName: "Afi Mensah",
+        department: "Hospitalisation",
+        room: "H1",
+        bedNumber: "01",
+        admissionDate: "2026-04-14",
+        dischargeDate: "",
+        status: "En cours",
+        createdAt: "2026-04-14T09:00:00.000Z",
+        updatedAt: "2026-04-14T09:00:00.000Z"
+      }
+    ],
+    surgeries: [
+      {
+        id: "sur_001",
+        clinicId,
+        patientName: "Afi Mensah",
+        procedureName: "Cesarianne programmee",
+        surgeon: "Dr. Kodjo Mensah",
+        anesthetist: "Dr. Akossiwa",
+        surgeryDate: "2026-04-15",
+        status: "Planifiee",
+        createdAt: "2026-04-14T12:00:00.000Z",
+        updatedAt: "2026-04-14T12:00:00.000Z"
+      }
+    ],
     births: [
       {
         id: "bir_001",
@@ -129,6 +221,45 @@ export function createSeedData() {
         updatedAt: "2026-04-09T14:30:00.000Z"
       }
     ],
+    labOrders: [
+      {
+        id: "lab_001",
+        clinicId,
+        patientName: "Nadia Hounkpe",
+        examType: "NFS",
+        requestedBy: "Dr. Mireille Akakpo",
+        result: "Hb 11.2 g/dL",
+        status: "Valide",
+        createdAt: "2026-04-10T08:00:00.000Z",
+        updatedAt: "2026-04-10T08:00:00.000Z"
+      }
+    ],
+    imagingOrders: [
+      {
+        id: "img_001",
+        clinicId,
+        patientName: "Nadia Hounkpe",
+        imagingType: "Echographie obstetricale",
+        requestedBy: "Dr. Mireille Akakpo",
+        report: "Foetus unique evolutif",
+        status: "Realise",
+        createdAt: "2026-04-11T08:00:00.000Z",
+        updatedAt: "2026-04-11T08:00:00.000Z"
+      }
+    ],
+    prescriptions: [
+      {
+        id: "pre_001",
+        clinicId,
+        patientName: "Nadia Hounkpe",
+        medication: "Fer + acide folique",
+        dosage: "1 comprime par jour",
+        duration: "30 jours",
+        prescribedBy: "Dr. Mireille Akakpo",
+        createdAt: "2026-04-10T08:30:00.000Z",
+        updatedAt: "2026-04-10T08:30:00.000Z"
+      }
+    ],
     inventory: [
       {
         id: "inv_001",
@@ -142,6 +273,43 @@ export function createSeedData() {
         price: 4500,
         createdAt: "2026-04-02T11:00:00.000Z",
         updatedAt: "2026-04-02T11:00:00.000Z"
+      }
+    ],
+    insuranceProviders: [
+      {
+        id: "ins_001",
+        clinicId,
+        name: "Mutuelle Sante Plus",
+        coverageRate: 80,
+        phone: "+229 91000010",
+        email: "contact@mutuelle.demo",
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-04-01T08:00:00.000Z"
+      }
+    ],
+    insuranceClaims: [
+      {
+        id: "cla_001",
+        clinicId,
+        patientName: "Nadia Hounkpe",
+        providerName: "Mutuelle Sante Plus",
+        claimAmount: 12000,
+        coveredAmount: 9600,
+        status: "En attente",
+        createdAt: "2026-04-12T09:00:00.000Z",
+        updatedAt: "2026-04-12T09:00:00.000Z"
+      }
+    ],
+    documents: [
+      {
+        id: "doc_001",
+        clinicId,
+        patientName: "Nadia Hounkpe",
+        documentType: "Compte rendu",
+        title: "Consultation prénatale avril",
+        fileName: "compte-rendu-avril.pdf",
+        createdAt: "2026-04-12T09:30:00.000Z",
+        updatedAt: "2026-04-12T09:30:00.000Z"
       }
     ],
     invoices: [

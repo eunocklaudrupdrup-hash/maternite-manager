@@ -30,17 +30,17 @@ const sections = [
 
 const initialForms = {
   patients: { fullName: "", age: "", phone: "", pregnancyWeeks: "", serviceStatusId: "", history: "" },
-  appointments: { patientName: "", service: "", staffName: "", date: "", time: "", status: "Confirme" },
+  appointments: { patientName: "", service: "", staffName: "", date: "", time: "", status: "Confirmé" },
   consultations: { patientName: "", department: "", doctorName: "", complaint: "", diagnosis: "", consultationDate: "" },
   emergencies: { patientName: "", severity: "", arrivalDate: "", arrivalTime: "", notes: "", status: "" },
   admissions: { patientName: "", department: "", room: "", bedNumber: "", admissionDate: "", dischargeDate: "", status: "" },
   beds: { ward: "", room: "", bedNumber: "", category: "", status: "" },
   surgeries: { patientName: "", procedureName: "", surgeon: "", anesthetist: "", surgeryDate: "", status: "" },
-  births: { motherName: "", babyName: "", sex: "Feminin", weightKg: "", heightCm: "", deliveryType: "Naturel", complications: "", birthDate: "", birthTime: "", motherStatus: "Stable", babyStatus: "Stable" },
+  births: { motherName: "", babyName: "", sex: "Féminin", weightKg: "", heightCm: "", deliveryType: "Naturel", complications: "", birthDate: "", birthTime: "", motherStatus: "Stable", babyStatus: "Stable" },
   labOrders: { patientName: "", examType: "", requestedBy: "", result: "", status: "" },
   imagingOrders: { patientName: "", imagingType: "", requestedBy: "", report: "", status: "" },
   prescriptions: { patientName: "", medication: "", dosage: "", duration: "", prescribedBy: "" },
-  inventory: { name: "", category: "Medicament", photo: "", quantity: "", unit: "", lowStockThreshold: "", price: "" },
+  inventory: { name: "", category: "Médicament", photo: "", quantity: "", unit: "", lowStockThreshold: "", price: "" },
   pharmacySale: {
     productId: "",
     quantity: "1",
@@ -142,7 +142,7 @@ const genericModuleConfigs = {
   },
   insuranceClaims: {
     title: "Prises en charge",
-    fields: [["patientName", "Patient"], ["providerName", "Assureur"], ["claimAmount", "Montant demande", "number"], ["coveredAmount", "Montant couvert", "number"], ["status", "Statut"]],
+    fields: [["patientName", "Patient"], ["providerName", "Assureur"], ["claimAmount", "Montant demandé", "number"], ["coveredAmount", "Montant couvert", "number"], ["status", "Statut"]],
     columns: ["patientName", "providerName", "claimAmount", "coveredAmount", "status"]
   },
   documents: {
@@ -211,7 +211,7 @@ export default function App() {
       address: "",
       phone: "",
       email: "",
-      type: "Privee"
+      type: "Privée"
     },
     admins: [
       { fullName: "", email: "", password: "" }
@@ -502,7 +502,7 @@ export default function App() {
         method: "PATCH",
         body: JSON.stringify({ password: nextPassword })
       });
-      window.alert("Mot de passe reinitialise.");
+      window.alert("Mot de passe réinitialisé.");
     } catch (submitError) {
       setError(submitError.message);
     }
@@ -1072,7 +1072,7 @@ export default function App() {
                 <p className="muted">Seul l'administrateur peut ajouter des statuts.</p>
               ) : (
                 <ResourceForm
-                  fields={[["label", "Libelle"], ["price", "Prix", "number"]]}
+                  fields={[["label", "Libellé"], ["price", "Prix", "number"]]}
                   value={forms.serviceStatuses}
                   onChange={(value) => updateForm("serviceStatuses", value, setForms)}
                   onSubmit={() => submitResource("serviceStatuses", "serviceStatuses")}
@@ -1103,7 +1103,7 @@ export default function App() {
             title="Naissances"
             form={
               <ResourceForm
-                fields={[["motherName", "Mere"], ["babyName", "Bebe"], ["sex", "Sexe"], ["weightKg", "Poids (kg)", "number"], ["heightCm", "Taille (cm)", "number"], ["deliveryType", "Type d'accouchement"], ["complications", "Complications"], ["birthDate", "Date", "date"], ["birthTime", "Heure", "time"], ["motherStatus", "Etat de la mere"], ["babyStatus", "Etat du bebe"]]}
+                fields={[["motherName", "Mère"], ["babyName", "Bébé"], ["sex", "Sexe"], ["weightKg", "Poids (kg)", "number"], ["heightCm", "Taille (cm)", "number"], ["deliveryType", "Type d'accouchement"], ["complications", "Complications"], ["birthDate", "Date", "date"], ["birthTime", "Heure", "time"], ["motherStatus", "État de la mère"], ["babyStatus", "État du bébé"]]}
                 value={forms.births}
                 onChange={(value) => updateForm("births", value, setForms)}
                 onSubmit={() => submitResource("births", "births")}
@@ -1421,7 +1421,7 @@ export default function App() {
                     <p>Total patientes: {data.reports.medical.totalPatients}</p>
                     <p>Accouchements sur la periode: {data.reports.medical.birthsCount}</p>
                     <p>Accouchements naturels: {data.reports.medical.naturalBirths}</p>
-                    <p>Cesariennes: {data.reports.medical.cSections}</p>
+                    <p>Césariennes: {data.reports.medical.cSections}</p>
                     <p>Cas avec complications: {data.reports.medical.complications}</p>
                   </div>
                 ) : (
@@ -1434,7 +1434,7 @@ export default function App() {
                   <div className="report-list">
                     <p>Revenus totaux: {data.reports.financial.totalRevenue} FCFA</p>
                     <p>Dépenses totales: {data.reports.financial.totalExpenses} FCFA</p>
-                    <p>Nombre de factures: {data.reports.financial.invoiceCount}</p>
+                    <p>Nombre de factures : {data.reports.financial.invoiceCount}</p>
                     <p>Nombre de dépenses: {data.reports.financial.expenseCount}</p>
                   </div>
                 ) : (
@@ -1568,7 +1568,7 @@ function SimpleTable({ rows, columns }) {
   const [query, setQuery] = useState("");
 
   if (!rows?.length) {
-    return <p className="muted">Aucune donnee disponible.</p>;
+    return <p className="muted">Aucune donnée disponible.</p>;
   }
 
   const filteredRows = filterTableRows(
@@ -1610,7 +1610,7 @@ function InventoryTable({ rows }) {
   const [query, setQuery] = useState("");
 
   if (!rows?.length) {
-    return <p className="muted">Aucun produit trouve.</p>;
+    return <p className="muted">Aucun produit trouvé.</p>;
   }
 
   const filteredRows = filterTableRows(
@@ -1660,7 +1660,7 @@ function PatientList({ rows, serviceStatuses, onAssignStatus }) {
   const [query, setQuery] = useState("");
 
   if (!rows?.length) {
-    return <p className="muted">Aucune donnee disponible.</p>;
+    return <p className="muted">Aucune donnée disponible.</p>;
   }
 
   const filteredRows = filterTableRows(
@@ -1752,7 +1752,7 @@ function ServiceStatusList({ rows, onSave }) {
             </th>
           </tr>
           <tr>
-            <th>Libelle</th>
+            <th>Libellé</th>
             <th>Prix</th>
             <th>Action</th>
           </tr>
@@ -1819,7 +1819,7 @@ function PendingPaymentsList({ rows, onPay }) {
             <th>Patiente</th>
             <th>Statut</th>
             <th>Montant</th>
-            <th>Etat</th>
+            <th>État</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -1847,7 +1847,7 @@ function InvoicesList({ rows }) {
   const [query, setQuery] = useState("");
 
   if (!rows?.length) {
-    return <p className="muted">Aucune donnee disponible.</p>;
+    return <p className="muted">Aucune donnée disponible.</p>;
   }
 
   const filteredRows = filterTableRows(
@@ -1937,7 +1937,7 @@ function AuditTable({ rows }) {
             <th>Action</th>
             <th>Date</th>
             <th>Heure</th>
-            <th>Details</th>
+            <th>Détails</th>
           </tr>
         </thead>
         <tbody>
